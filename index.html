@@ -187,7 +187,7 @@ const BARRIER_X = 58, BARRIER_TOP = FLOOR - 70; // 洞口前的壓克力擋板�
 const RAIL_Y = 34;
 const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
-function getMaxLen() { return 180 + (save.upgrades?.rope || 0) * 75; }
+function getMaxLen() { return 280 + ((save.upgrades || {}).rope || 0) * 45; }
 const GRAV = 520;
 function getSpeed(base) { return base * (1 + ((save.upgrades || {}).speed || 0) * 0.15); }
 const MOVE_SPEED = 72, BACK_SPEED = 60, DESCEND_SPEED = 70, RISE_SPEED = 48;
@@ -223,9 +223,11 @@ function buildSprite(shape, face, kind) {
     if (has(x - 1, y) || has(x + 1, y) || has(x, y - 1) || has(x, y + 1)) o[y * N + x] = OUT;
   }
   if (face) face(painter(o));
-  const c = document.createElement('canvas'); c.width = c.height = N;
+  const S = kind ? (kind.r || 8) / 8 : 1;
+  const c = document.createElement('canvas'); c.width = c.height = Math.ceil(N * S);
   const cx = c.getContext('2d');
-  for (let i = 0; i < o.length; i++) if (o[i]) { cx.fillStyle = o[i]; cx.fillRect(i % N, Math.floor(i / N), 1, 1); }
+  cx.scale(S, S);
+  for (let i = 0; i < o.length; i++) if (o[i]) { cx.fillStyle = o[i]; cx.fillRect(i % N, Math.floor(i / N), 1.1, 1.1); }
   return c;
 }
 const eyes = (p, x1, x2, y) => { p.px(x1, y - 1, OUT); p.px(x1, y, OUT); p.px(x2, y - 1, OUT); p.px(x2, y, OUT); };
@@ -429,10 +431,12 @@ function addPrize(x, y, kind = -1) {
 
 /* ============ 爪子幾何 ============ */
 function clawGeom() {
+  const sz = ((save.upgrades || {}).size || 0);
+  const S = 1 + sz * 0.2;
   const c = Math.cos(claw.theta), s = Math.sin(claw.theta);
   const hx = claw.gx + s * claw.len, hy = RAIL_Y + c * claw.len;
-  const tf = (lx, ly) => ({ x: hx + lx * c + ly * s, y: hy - lx * s + ly * c });
-  const toLocal = (x, y) => { const dx = x - hx, dy = y - hy; return { x: dx * c - dy * s, y: dx * s + dy * c }; };
+  const tf = (lx, ly) => ({ x: hx + lx * c * S + ly * s * S, y: hy - lx * s * S + ly * c * S });
+  const toLocal = (x, y) => { const dx = x - hx, dy = y - hy; return { x: (dx * c - dy * s) / S, y: (dx * s + dy * c) / S }; };
   const a = 0.25 + 0.65 * claw.open, b = a - 1.1;
   const arms = [];
   for (const side of [-1, 1]) {
@@ -441,7 +445,7 @@ function clawGeom() {
     const p2 = { x: p1.x + side * Math.sin(b) * 9, y: p1.y + Math.cos(b) * 9 };
     arms.push([tf(p0.x, p0.y), tf(p1.x, p1.y), tf(p2.x, p2.y)]);
   }
-  return { hx, hy, tf, toLocal, arms, box: [tf(-5, 4), tf(5, 4)] };
+  return { hx, hy, tf, toLocal, arms, box: [tf(-5, 4), tf(5, 4)], S };
 }
 
 /* 圓與線段碰撞：把圓推出去，回傳法向量 */
@@ -855,8 +859,12 @@ function text(str, x, y, col, size = 11, align = 'center', font = 'Cubic11') {
   ctx.fillStyle = OUT; ctx.fillText(str, x + 1, y + 1); ctx.fillStyle = col; ctx.fillText(str, x, y);
 }
 function drawPrize(p) {
-  const s = KINDS[p.kind].sprite, x = Math.round(p.x - SPR / 2), y = Math.round(p.y - SPR / 2);
-  if (p.flip) { ctx.save(); ctx.translate(x + SPR, y); ctx.scale(-1, 1); ctx.drawImage(s, 0, 0); ctx.restore(); }
+  const s = KINDS[p.kind].sprite;
+  const R = p.r || 8;
+  const S = R / 8;
+  const offset = Math.ceil((SPR / 2) * S);
+  const x = Math.round(p.x - offset), y = Math.round(p.y - offset);
+  if (p.flip) { ctx.save(); ctx.translate(x + offset * 2, y); ctx.scale(-1, 1); ctx.drawImage(s, 0, 0); ctx.restore(); }
   else ctx.drawImage(s, x, y);
 }
 function drawClaw(geom) {
@@ -870,13 +878,14 @@ function drawClaw(geom) {
   // 繩子
   pline(claw.gx, RAIL_Y, geom.hx, geom.hy, '#cfd6e6', 1);
   // 爪臂
-  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, OUT, 4); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, OUT, 4); }
-  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#c9d2e6', 2); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#c9d2e6', 2); }
+  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, OUT, 4 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, OUT, 4 * geom.S); }
+  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#c9d2e6', 2 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#c9d2e6', 2 * geom.S); }
   // 馬達盒
-  const hx = Math.round(geom.hx), hy = Math.round(geom.hy);
-  ctx.fillStyle = OUT; ctx.fillRect(hx - 7, hy - 2, 14, 11);
-  ctx.fillStyle = '#9aa6c4'; ctx.fillRect(hx - 6, hy - 1, 12, 9);
-  ctx.fillStyle = '#c9d2e6'; ctx.fillRect(hx - 6, hy - 1, 12, 2);
+    const hx = Math.round(geom.hx), hy = Math.round(geom.hy);
+    const S = geom.S;
+    ctx.fillStyle = OUT; ctx.fillRect(hx - 7*S, hy - 2*S, 14*S, 11*S);
+    ctx.fillStyle = '#9aa6c4'; ctx.fillRect(hx - 6*S, hy - 1*S, 12*S, 9*S);
+    ctx.fillStyle = '#c9d2e6'; ctx.fillRect(hx - 6*S, hy - 1*S, 12*S, 2*S);
   ctx.fillStyle = round && round.guaranteed && mode !== 'idle' ? (Math.floor(performance.now() / 150) % 2 ? '#ffd23f' : '#ff3b3b') : '#ff3b3b';
   ctx.fillRect(hx - 1, hy + 3, 2, 2);
 }
