@@ -422,8 +422,9 @@ function rollKind() {
   const r = Math.random(); const rar = r < RARITY[0].p ? 0 : r < RARITY[0].p + RARITY[1].p ? 1 : 2;
   return KINDS.indexOf(pick(KINDS.filter(k => k.rar === rar)));
 }
-function addPrize(x, y, kind = rollKind()) {
-  prizes.push({ id: nextId++, x, y, vx: rand(-20, 20), vy: 0, r: PRIZE_R, kind, held: false, carried: false, dropped: false, noArm: 0, flip: Math.random() < .5 });
+function addPrize(x, y, kind = -1) {
+  if (kind === -1) kind = rollKind();
+  if (!KINDS[kind]) console.error('INVALID KIND:', kind); prizes.push({ id: nextId++, x, y, vx: rand(-20, 20), vy: 0, r: KINDS[kind].r || 8, kind, held: false, carried: false, dropped: false, noArm: 0, flip: Math.random() < .5 });
 }
 
 /* ============ 爪子幾何 ============ */
