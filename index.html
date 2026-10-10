@@ -19,9 +19,11 @@ main{display:flex;gap:28px;align-items:flex-start;justify-content:center;padding
 .machine{display:flex;flex-direction:column;align-items:center;gap:14px}
 #game{width:min(92vw,512px,calc((100vh - 210px)*0.8));min-width:256px;aspect-ratio:256/320;image-rendering:pixelated;image-rendering:crisp-edges;display:block;border:4px solid var(--dark);box-shadow:0 0 0 4px var(--pink),0 0 36px rgba(255,95,162,.45);background:#000;touch-action:none}
 .controls{display:grid;grid-template-columns:1fr 1fr 1.5fr 1.5fr;gap:10px;width:100%}
-.pbtn{font-family:inherit;font-size:18px;color:var(--dark);background:var(--yellow);border:none;padding:12px 6px;cursor:pointer;box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45),0 0 0 3px var(--dark);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-.pbtn:hover{filter:brightness(1.08)}
-.pbtn:active,.pbtn.on{transform:translateY(2px);box-shadow:inset 4px 4px 0 rgba(0,0,0,.25),0 0 0 3px var(--dark)}
+.pbtn{font-family:inherit;font-size:18px;color:var(--dark);background:var(--yellow);border:none;padding:12px 6px;cursor:pointer;box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45),0 0 0 3px var(--dark);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s, filter 0.2s}
+.pbtn:focus{outline:none}
+.pbtn:hover:not(:disabled){filter:brightness(1.08)}
+.pbtn:active:not(:disabled),.pbtn.on{transform:translateY(2px);box-shadow:inset 4px 4px 0 rgba(0,0,0,.25),0 0 0 3px var(--dark)}
+.pbtn:disabled{opacity:0.5;filter:grayscale(80%);cursor:not-allowed;pointer-events:none}
 .pbtn.drop{background:var(--pink)}
 .pbtn.coin{background:var(--green)}
 .pbtn.small{font-size:14px;padding:8px 10px}
@@ -84,7 +86,12 @@ footer a{color:var(--cyan)}
   main{flex-direction:column;align-items:center;gap:22px}
   .panel{width:min(94vw,512px)}
   #game{width:min(94vw,512px)}
-  .pbtn{font-size:20px;padding:16px 6px}
+  .controls{grid-template-columns:1fr 1fr;grid-template-areas:"left right" "drop coin";gap:12px}
+  #btnLeft{grid-area:left}
+  #btnRight{grid-area:right}
+  #btnDrop{grid-area:drop}
+  #btnCoin{grid-area:coin}
+  .pbtn{font-size:22px;padding:18px 6px}
   .pbtn kbd{display:none}
   .help .kb{display:none}
 }
@@ -883,7 +890,13 @@ function updateUI() {
   note.classList.toggle('armed', save.armed);
   note.textContent = save.armed ? '爪力全開：只要碰得到娃娃就一定夾得住！' : `再投 ${(PITY_COST - save.pity) / COIN} 次觸發保夾。`;
   $('#btnMute').textContent = save.muted ? '🔇' : '🔊';
-  $('#btnCoin').firstChild.textContent = credits > 0 ? `投幣 10 元 (${credits})` : '投幣 10 元';
+  $('#btnCoin').firstChild.textContent = credits > 0 ? `投幣 10 元(${credits})` : '投幣 10 元';
+
+  const canMove = mode === 'move';
+  $('#btnLeft').disabled = !canMove;
+  $('#btnRight').disabled = !canMove;
+  $('#btnDrop').disabled = !canMove;
+  $('#btnCoin').disabled = mode !== 'idle';
 }
 
 const modal = $('#modal');
