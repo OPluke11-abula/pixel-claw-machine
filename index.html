@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="PIXEL CLAW 像素夾娃娃機：爪力很弱、但會保夾的 8-bit 網頁夾娃娃機。">
+<title>PIXEL CLAW 像素夾娃娃機</title>
+<style>
+@font-face{font-family:"Cubic11";src:url("https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"PressStart";src:url("https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2") format("woff2");font-display:swap}
+:root{--ink:#f4f0ff;--dark:#0d0820;--panel:#2a1b4a;--pink:#ff5fa2;--yellow:#ffd23f;--cyan:#3ff0ff;--green:#5dff7a;--purple:#c08bff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:#140c2b;background-image:radial-gradient(#2a1c55 1px,transparent 1px);background-size:16px 16px;color:var(--ink);font-family:"Cubic11","PressStart",monospace;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+header{text-align:center;padding:16px 8px 4px}
+h1{font-family:"PressStart","Cubic11",monospace;font-weight:normal;font-size:clamp(18px,3.4vw,28px);color:var(--yellow);text-shadow:3px 3px 0 #e8336b,6px 6px 0 var(--dark);letter-spacing:2px}
+h1 small{display:block;font-family:"Cubic11",monospace;font-size:clamp(14px,2vw,18px);color:var(--cyan);text-shadow:2px 2px 0 var(--dark);margin-top:10px;letter-spacing:4px}
+main{display:flex;gap:28px;align-items:flex-start;justify-content:center;padding:14px 10px 10px;width:100%;max-width:1040px}
+.machine{display:flex;flex-direction:column;align-items:center;gap:14px}
+#game{width:min(92vw,512px,calc((100vh - 210px)*0.8));min-width:256px;aspect-ratio:256/320;image-rendering:pixelated;image-rendering:crisp-edges;display:block;border:4px solid var(--dark);box-shadow:0 0 0 4px var(--pink),0 0 36px rgba(255,95,162,.45);background:#000;touch-action:none}
+.controls{display:grid;grid-template-columns:1fr 1fr 1.5fr 1.5fr;gap:10px;width:100%}
+.pbtn{font-family:inherit;font-size:18px;color:var(--dark);background:var(--yellow);border:none;padding:12px 6px;cursor:pointer;box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45),0 0 0 3px var(--dark);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.pbtn:hover{filter:brightness(1.08)}
+.pbtn:active,.pbtn.on{transform:translateY(2px);box-shadow:inset 4px 4px 0 rgba(0,0,0,.25),0 0 0 3px var(--dark)}
+.pbtn.drop{background:var(--pink)}
+.pbtn.coin{background:var(--green)}
+.pbtn.small{font-size:14px;padding:8px 10px}
+.pbtn kbd{display:block;font-family:"Cubic11",monospace;font-size:11px;opacity:.6;margin-top:4px}
+.panel{width:340px;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--panel);padding:14px;box-shadow:0 0 0 4px var(--dark),inset -4px -4px 0 #1c1236,inset 4px 4px 0 #3d2a6b}
+.card h2{font-size:15px;color:var(--cyan);margin-bottom:10px;font-weight:normal;letter-spacing:2px}
+.boss{display:flex;gap:14px;align-items:flex-start}
+.boss-side{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+#bossFace{width:72px;height:72px;image-rendering:pixelated;background:#3d2a6b;box-shadow:0 0 0 3px var(--dark)}
+.boss-name{font-size:12px;color:var(--yellow)}
+.bubble{position:relative;background:var(--ink);color:var(--dark);padding:10px 12px;font-size:15px;line-height:1.55;min-height:72px;flex:1;box-shadow:0 0 0 3px var(--dark)}
+.bubble::before{content:"";position:absolute;left:-12px;top:22px;border:6px solid transparent;border-right-color:var(--dark)}
+.stat-main{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.stat-main span{font-size:14px;color:#cbbcf0}
+.money{font-family:"PressStart",monospace;font-size:20px;color:var(--yellow);text-shadow:2px 2px 0 var(--dark)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+.stat-grid div{background:#1c1236;padding:8px 2px}
+.stat-grid b{display:block;font-family:"PressStart",monospace;font-weight:normal;font-size:12px;color:var(--ink);margin-bottom:6px}
+.stat-grid small{font-size:12px;color:#a99bd0}
+.convert{margin-top:10px;font-size:13px;color:#cbbcf0;line-height:1.6}
+.pity-head{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}
+.bar{height:18px;background:#1c1236;box-shadow:0 0 0 3px var(--dark);position:relative;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--pink) 0 8px,#ff8fc0 8px 16px);transition:width .3s steps(6)}
+.bar.armed i{background:repeating-linear-gradient(90deg,var(--yellow) 0 8px,#fff3a8 8px 16px);animation:blink .5s steps(2) infinite}
+.pity-note{font-size:12px;color:#a99bd0;margin-top:8px;min-height:1.4em}
+.pity-note.armed{color:var(--yellow)}
+@keyframes blink{50%{opacity:.45}}
+.row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
+.help{font-size:13px;line-height:1.75;color:#cbbcf0}
+.help b{color:var(--yellow);font-weight:normal}
+footer{font-size:12px;color:#8f80bb;padding:18px 10px 26px;text-align:center;line-height:1.8}
+footer a{color:var(--cyan)}
+.modal{position:fixed;inset:0;background:rgba(8,4,20,.82);display:flex;align-items:center;justify-content:center;z-index:20;padding:12px}
+.modal[hidden]{display:none}
+.modal-box{width:min(620px,96vw);max-height:90vh;overflow:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modal-head h2{margin:0;font-size:18px}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.dex-item{background:#1c1236;padding:10px 6px;text-align:center;box-shadow:0 0 0 3px var(--dark)}
+.dex-item canvas{width:72px;height:72px;image-rendering:pixelated}
+.dex-item .nm{font-size:14px;margin-top:4px}
+.dex-item .rr{font-size:12px;margin-top:4px}
+.dex-item .ct{font-family:"PressStart",monospace;font-size:10px;color:var(--yellow);margin-top:6px}
+.dex-sum{font-size:14px;color:#cbbcf0;margin-bottom:12px;line-height:1.6}
+.ach{display:flex;flex-direction:column;gap:10px}
+.ach-item{display:flex;gap:12px;align-items:center;background:#1c1236;padding:10px 12px;box-shadow:0 0 0 3px var(--dark)}
+.ach-item .ic{font-size:24px;width:32px;text-align:center}
+.ach-item .t{font-size:15px}
+.ach-item .d{font-size:12px;color:#a99bd0;margin-top:4px}
+.ach-item.locked{opacity:.45}
+.danger{margin-top:16px;display:flex;justify-content:flex-end}
+.danger .pbtn{background:#ff6b6b}
+#toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:30;pointer-events:none;width:max-content;max-width:92vw}
+.toast{background:var(--yellow);color:var(--dark);padding:10px 16px;font-size:15px;box-shadow:0 0 0 3px var(--dark),6px 6px 0 rgba(0,0,0,.4);animation:tin .25s steps(3),tout .4s steps(3) 2.6s forwards}
+.toast.ach{background:var(--cyan)}
+@keyframes tin{from{transform:translateY(-20px);opacity:0}}
+@keyframes tout{to{transform:translateY(-20px);opacity:0}}
+@media (max-width:760px){
+  main{flex-direction:column;align-items:center;gap:22px}
+  .panel{width:min(94vw,512px)}
+  #game{width:min(94vw,512px)}
+  .pbtn{font-size:20px;padding:16px 6px}
+  .pbtn kbd{display:none}
+  .help .kb{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>PIXEL CLAW<small>像素夾娃娃機</small></h1>
+</header>
+
+<main>
+  <section class="machine">
+    <canvas id="game" width="256" height="320" aria-label="夾娃娃機遊戲畫面"></canvas>
+    <div class="controls">
+      <button class="pbtn" id="btnLeft" aria-label="向左">◀<kbd>←/A</kbd></button>
+      <button class="pbtn" id="btnRight" aria-label="向右">▶<kbd>→/D</kbd></button>
+      <button class="pbtn drop" id="btnDrop">下爪<kbd>SPACE</kbd></button>
+      <button class="pbtn coin" id="btnCoin">投幣 10 元<kbd>ENTER</kbd></button>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="card boss">
+      <div class="boss-side">
+        <canvas id="bossFace" width="18" height="18"></canvas>
+        <div class="boss-name">台主 阿財</div>
+      </div>
+      <div class="bubble" id="bossText" aria-live="polite">……</div>
+    </div>
+
+    <div class="card">
+      <div class="stat-main"><span>累積花費</span><div class="money">NT$<b id="spent">0</b></div></div>
+      <div class="stat-grid">
+        <div><b id="plays">0</b><small>遊玩次數</small></div>
+        <div><b id="wins">0</b><small>夾到娃娃</small></div>
+        <div><b id="rate">0%</b><small>成功率</small></div>
+      </div>
+      <div class="convert" id="convert">這些錢可以買 0 個便當，或 0 杯珍奶。</div>
+    </div>
+
+    <div class="card">
+      <div class="pity-head"><span>保夾進度</span><span id="pityText">0 / 300</span></div>
+      <div class="bar" id="pityBar"><i id="pityFill"></i></div>
+      <div class="pity-note" id="pityNote">每投滿 300 元會觸發一次保夾。</div>
+    </div>
+
+    <div class="row">
+      <button class="pbtn small" id="btnDex">娃娃櫃</button>
+      <button class="pbtn small" id="btnAch">成就</button>
+      <button class="pbtn small" id="btnMute" aria-label="音效開關">🔊</button>
+    </div>
+
+    <div class="card help">
+      <h2>玩法</h2>
+      <span class="kb"><b>Enter</b> 投幣、<b>← →</b> 移動、<b>Space</b> 下爪，<b>M</b> 靜音。<br></span>
+      投幣後有 <b>15 秒</b>可以瞄準，爪子會晃，要抓準時機。爪力很弱，娃娃常常會在半空掉下來；也可以把娃娃<b>推進左下角的洞</b>，一樣算你的。
+    </div>
+  </aside>
+</main>
+
+<footer>
+  第五週作業・Vibe Coding 作品｜中原資工 游啓揚 × AI<br>
+  <a href="https://github.com/OPluke11-abula/pixel-claw-machine/blob/main/SPEC.md" target="_blank" rel="noopener">規格書 SPEC.md</a>・
+  <a href="https://github.com/OPluke11-abula/pixel-claw-machine" target="_blank" rel="noopener">GitHub 原始碼</a>・
+  中文字型：俐方體11號 (OFL)
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="card modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle">娃娃櫃</h2><button class="pbtn small" id="modalClose" aria-label="關閉">✕</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============ 小工具 ============ */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+/* ============ 常數（邏輯像素） ============ */
+const W = 256, H = 320;
+const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 278;
+const FLOOR = 262;                 // 娃娃堆放的地板
+const BARRIER_X = 58, BARRIER_TOP = FLOOR - 40; // 洞口前的壓克力擋板（v1.1 加高，避免娃娃堆自己滾進洞）
+const RAIL_Y = 34;
+const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
+const REST_LEN = 12;
+const MAX_LEN = FLOOR - RAIL_Y - 24;
+const GRAV = 520;
+const MOVE_SPEED = 72, BACK_SPEED = 60, DESCEND_SPEED = 70, RISE_SPEED = 48;
+const PRIZE_R = 8;
+const ROUND_TIME = 15;
+const COIN = 10, PITY_COST = 300;
+const HOLD_OPEN = 0.45;
+const STEP = 1 / 120;
+const OUT = '#1b1030', PINK = '#ff7aa8';
+
+/* ============ 存檔 ============ */
+const SAVE_KEY = 'pixel-claw-save-v1';
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false });
+let save = defSave();
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) save = Object.assign(defSave(), JSON.parse(raw)); } catch (e) { /* 無痕模式等情況就用記憶體 */ }
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+
+/* ============ 像素圖產生器 ============ */
+const SPR = 18; // 16x16 圖案 + 外框各 1px
+function buildSprite(shape, face) {
+  const N = SPR, g = new Array(N * N).fill(null);
+  const painter = arr => ({
+    px(x, y, c) { x += 1; y += 1; if (x >= 0 && y >= 0 && x < N && y < N) arr[y * N + x] = c; },
+    clear(x, y) { x += 1; y += 1; if (x >= 0 && y >= 0 && x < N && y < N) arr[y * N + x] = null; },
+    rect(x0, y0, w, h, c) { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) this.px(x, y, c); },
+    ell(cx, cy, rx, ry, c) { for (let y = -1; y < 17; y++) for (let x = -1; x < 17; x++) { const dx = (x + .5 - cx) / rx, dy = (y + .5 - cy) / ry; if (dx * dx + dy * dy <= 1) this.px(x, y, c); } }
+  });
+  shape(painter(g));
+  const o = g.slice();
+  const has = (x, y) => x >= 0 && y >= 0 && x < N && y < N && g[y * N + x];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (g[y * N + x]) continue;
+    if (has(x - 1, y) || has(x + 1, y) || has(x, y - 1) || has(x, y + 1)) o[y * N + x] = OUT;
+  }
+  if (face) face(painter(o));
+  const c = document.createElement('canvas'); c.width = c.height = N;
+  const cx = c.getContext('2d');
+  for (let i = 0; i < o.length; i++) if (o[i]) { cx.fillStyle = o[i]; cx.fillRect(i % N, Math.floor(i / N), 1, 1); }
+  return c;
+}
+const eyes = (p, x1, x2, y) => { p.px(x1, y - 1, OUT); p.px(x1, y, OUT); p.px(x2, y - 1, OUT); p.px(x2, y, OUT); };
+const blush = (p, y, x1 = 3, x2 = 12) => { p.px(x1, y, PINK); p.px(x2, y, PINK); };
+const catEars = (p, c) => { for (let i = 0; i < 4; i++) for (let x = 3; x <= 3 + i; x++) { p.px(x, 2 + i, c); p.px(15 - x, 2 + i, c); } };
+
+const RARITY = [
+  { name: '普通', color: '#9fe8ff', p: 0.6 },
+  { name: '稀有', color: '#c08bff', p: 0.3 },
+  { name: '傳說', color: '#ffd23f', p: 0.1 }
+];
+
+const KINDS = [
+  { id: 'bear', name: '小熊', rar: 0, w: 1.0,
+    shape(p) { const B = '#c8834a'; p.ell(3.5, 4.5, 2.3, 2.3, B); p.ell(12.5, 4.5, 2.3, 2.3, B); p.ell(8, 10, 6.6, 5.6, B); p.ell(8, 12, 2.8, 1.9, '#efc08a'); p.px(3, 4, '#8a5228'); p.px(12, 4, '#8a5228'); },
+    face(p) { eyes(p, 5, 10, 9); p.px(7, 11, OUT); p.px(8, 11, OUT); blush(p, 11); } },
+  { id: 'bunny', name: '兔兔', rar: 0, w: 1.0,
+    shape(p) { const C = '#f4f0ff', P = '#ffb3cf'; p.rect(4, 0, 2, 7, C); p.rect(10, 0, 2, 7, C); p.rect(5, 1, 1, 4, P); p.rect(10, 1, 1, 4, P); p.ell(8, 10.5, 6.3, 5.3, C); },
+    face(p) { eyes(p, 5, 10, 10); p.px(7, 12, OUT); p.px(8, 12, OUT); blush(p, 12); } },
+  { id: 'cat', name: '喵喵', rar: 0, w: 1.0,
+    shape(p) { const C = '#ff9a3c', D = '#d9701f'; catEars(p, C); p.ell(8, 10, 6.6, 5.6, C); p.rect(7, 5, 2, 2, D); p.px(3, 9, D); p.px(12, 9, D); },
+    face(p) { eyes(p, 5, 10, 9); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(1, 10, OUT); p.px(14, 10, OUT); blush(p, 11); } },
+  { id: 'frog', name: '青蛙', rar: 0, w: 1.0,
+    shape(p) { const G = '#5dcf4a'; p.ell(4.5, 5, 2.7, 2.5, G); p.ell(11.5, 5, 2.7, 2.5, G); p.ell(8, 10.5, 7, 5.3, G); p.ell(8, 13, 4, 2, '#bff08a'); },
+    face(p) { p.rect(4, 4, 2, 2, '#fff'); p.rect(10, 4, 2, 2, '#fff'); p.px(5, 5, OUT); p.px(10, 5, OUT); p.rect(6, 10, 4, 1, OUT); blush(p, 10); } },
+  { id: 'chick', name: '小雞', rar: 0, w: 1.0,
+    shape(p) { const Y = '#ffd84a'; p.px(8, 2, Y); p.px(7, 3, Y); p.px(8, 3, Y); p.ell(8, 10, 6.3, 6, Y); p.px(3, 11, '#f2b62a'); p.px(3, 12, '#f2b62a'); p.px(12, 11, '#f2b62a'); p.px(12, 12, '#f2b62a'); },
+    face(p) { eyes(p, 5, 10, 9); p.rect(7, 10, 2, 1, '#ff8a2a'); p.rect(7, 11, 2, 1, '#e0601a'); blush(p, 11, 4, 11); } },
+  { id: 'penguin', name: '企鵝', rar: 0, w: 1.0,
+    shape(p) { p.ell(8, 9.5, 6.5, 6.3, '#2f3f7a'); p.ell(8, 11, 4.2, 4.4, '#f4f0ff'); },
+    face(p) { eyes(p, 6, 9, 9); p.rect(7, 10, 2, 1, '#ff9a3c'); p.px(5, 15, '#ff9a3c'); p.px(6, 15, '#ff9a3c'); p.px(9, 15, '#ff9a3c'); p.px(10, 15, '#ff9a3c'); blush(p, 11, 5, 10); } },
+  { id: 'dino', name: '小恐龍', rar: 1, w: 1.2,
+    shape(p) { const S = '#ff5fa2'; for (const x of [5, 8, 11]) { p.px(x, 2, S); p.rect(x - 1, 3, 3, 1, S); } p.ell(8, 10, 6.6, 5.8, '#3fc9a8'); p.ell(8, 13, 3, 1.6, '#a8f0d8'); },
+    face(p) { eyes(p, 5, 10, 9); p.rect(6, 11, 4, 1, OUT); p.px(7, 12, '#fff'); blush(p, 11); } },
+  { id: 'ghost', name: '幽靈', rar: 1, w: 1.2,
+    shape(p) { const C = '#e8e4ff'; p.ell(8, 8, 6, 5.6, C); p.rect(2, 8, 12, 6, C); p.rect(2, 14, 2, 1, C); p.rect(7, 14, 2, 1, C); p.rect(12, 14, 2, 1, C); },
+    face(p) { eyes(p, 5, 10, 8); p.rect(7, 10, 2, 2, OUT); blush(p, 10, 4, 11); } },
+  { id: 'octo', name: '章魚', rar: 1, w: 1.2,
+    shape(p) { const C = '#ff6b6b'; p.ell(8, 7, 6, 5.5, C); p.rect(2, 10, 12, 3, C); for (const x of [2, 5, 9, 12]) p.rect(x, 13, 2, 2, C); p.px(6, 3, '#ff9a9a'); p.px(10, 4, '#ff9a9a'); },
+    face(p) { eyes(p, 5, 10, 7); p.rect(7, 9, 2, 2, '#8a1f2f'); blush(p, 9, 4, 11); } },
+  { id: 'slime', name: '史萊姆', rar: 1, w: 1.2,
+    shape(p) { const C = '#4aa8ff'; p.ell(8, 11.2, 6.8, 4.6, C); p.ell(8, 7.5, 4, 3.2, C); p.rect(7, 3, 2, 2, C); p.px(5, 8, '#bfe4ff'); p.px(5, 9, '#bfe4ff'); p.px(6, 7, '#bfe4ff'); },
+    face(p) { eyes(p, 6, 9, 11); p.px(7, 13, OUT); p.px(8, 13, OUT); blush(p, 12, 4, 11); } },
+  { id: 'lucky', name: '金色招財貓', rar: 2, w: 1.5,
+    shape(p) { const G = '#ffd23f'; catEars(p, G); p.ell(8, 10, 6.6, 5.6, G); p.ell(13.6, 5.6, 1.8, 2.3, G); p.rect(4, 13, 8, 1, '#e8336b'); p.px(5, 6, '#fff3a8'); p.px(6, 6, '#fff3a8'); },
+    face(p) { p.px(4, 9, OUT); p.px(5, 8, OUT); p.px(6, 9, OUT); p.px(9, 9, OUT); p.px(10, 8, OUT); p.px(11, 9, OUT); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(8, 14, '#e0a020'); p.px(7, 14, '#e0a020'); blush(p, 11); } },
+  { id: 'mimic', name: '寶箱怪', rar: 2, w: 1.5,
+    shape(p) { p.rect(2, 3, 12, 12, '#a8642a'); p.clear(2, 3); p.clear(13, 3); p.rect(3, 3, 10, 1, '#ffd23f'); p.rect(2, 8, 12, 2, '#2a0a1a'); p.rect(7, 11, 2, 2, '#ffd23f'); p.rect(2, 14, 12, 1, '#6e3a14'); },
+    face(p) { for (const x of [3, 5, 9, 11]) p.px(x, 8, '#fff'); for (const x of [4, 10, 12]) p.px(x, 9, '#fff'); p.rect(6, 9, 3, 1, PINK); p.px(5, 5, '#ff3b3b'); p.px(10, 5, '#ff3b3b'); p.px(4, 4, OUT); p.px(11, 4, OUT); } }
+];
+KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face); });
+
+/* 台主頭像（兩格嘴型） */
+function bossShape(p) {
+  const S = '#f2c39b', C = '#e8336b';
+  p.ell(8, 9.8, 6, 6.2, S); p.px(1, 9, S); p.px(14, 9, S);
+  p.ell(8, 3.6, 6.2, 3, C); p.rect(2, 3, 12, 3, C); p.rect(0, 5, 11, 1, '#b01e4f'); p.px(7, 2, '#ffd23f'); p.px(8, 2, '#ffd23f'); p.px(7, 3, '#ffd23f'); p.px(8, 3, '#ffd23f');
+  p.rect(2, 6, 1, 4, '#3a2414'); p.rect(13, 6, 1, 4, '#3a2414');
+}
+const bossBase = p => { p.px(4, 7, '#3a2414'); p.px(5, 7, '#3a2414'); p.px(10, 7, '#3a2414'); p.px(11, 7, '#3a2414'); p.px(5, 9, OUT); p.px(10, 9, OUT); p.rect(7, 10, 2, 1, '#d9946a'); p.rect(5, 12, 6, 1, '#5a3418'); p.px(4, 12, '#5a3418'); p.px(11, 12, '#5a3418'); };
+const BOSS_CLOSED = buildSprite(bossShape, p => { bossBase(p); p.rect(7, 13, 2, 1, '#8a2a2a'); });
+const BOSS_OPEN = buildSprite(bossShape, p => { bossBase(p); p.rect(6, 13, 4, 2, '#3a0a14'); p.rect(7, 14, 2, 1, PINK); });
+
+/* ============ 音效（Web Audio 方波） ============ */
+const Sfx = {
+  ctx: null, master: null, motor: null,
+  ensure() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      this.ctx = new AC(); this.master = this.ctx.createGain(); this.master.gain.value = 0.12; this.master.connect(this.ctx.destination);
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(f, d, { type = 'square', when = 0, vol = 0.6, to = null } = {}) {
+    if (save.muted || !this.ctx) return;
+    const t = this.ctx.currentTime + when, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + d + 0.03);
+  },
+  coin() { this.tone(988, .07); this.tone(1319, .3, { when: .07 }); },
+  drop() { this.tone(520, .45, { to: 180, type: 'triangle', vol: .8 }); },
+  grab() { this.tone(180, .08); this.tone(120, .14, { when: .08 }); },
+  slip() { this.tone(700, .45, { to: 90, type: 'sawtooth', vol: .35 }); },
+  win() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, .16, { when: i * .1 })); },
+  legend() { [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, .2, { when: i * .09 })); this.tone(1047, .6, { when: .7, type: 'triangle' }); },
+  alarm() { for (let i = 0; i < 8; i++) this.tone(i % 2 ? 660 : 880, .12, { when: i * .13, vol: .5 }); },
+  beep() { this.tone(1200, .05, { vol: .3 }); },
+  ach() { [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, .1, { when: i * .07, vol: .4 })); },
+  setMotor(on) {
+    if (!this.ctx) return;
+    if (on && !this.motor && !save.muted) {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = 58; g.gain.value = 0.18;
+      o.connect(g); g.connect(this.master); o.start(); this.motor = { o, g };
+    } else if (!on && this.motor) {
+      const { o, g } = this.motor, t = this.ctx.currentTime;
+      g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + 0.06); o.stop(t + 0.08); this.motor = null;
+    }
+  }
+};
+
+/* ============ 台主台詞 ============ */
+const LINES = {
+  welcome: ['歡迎光臨！按「投幣」開始，左右瞄準、下爪就對了！'],
+  back: ['又來啦？上次花了 NT$${spent}，今天手氣如何？'],
+  coin: ['來喔來喔～一次十塊！', '投下去就對了，夢想就在裡面！', '今天這台很鬆喔（大概）', '手感來了齁？', '看準再下爪啊～'],
+  fail: ['哎呀～可惜！', '剛剛那下爪力是有點害羞啦', '再一次一定中！（台主保證，但不負責）', '娃娃說它還不想跟你走', '爪子今天有點累，你懂的'],
+  near: ['哎呀～差一點點欸！再一次一定中！', '都到洞口了欸！這不再投一枚說不過去吧？', '差那麼一點點，台主都替你心痛了'],
+  streak: ['這台很好夾啊，是你的問題吧？', '連續失敗好幾次了…要不要換個角度？', '我看你是來贊助我電費的'],
+  empty: ['抓空氣喔？空氣不用錢的啦', '你是在幫娃娃按摩嗎？', '爪子：我盡力了。'],
+  pity: ['保夾啦！這把一定給你！', '嗶嗶嗶！保夾模式啟動，碰到就給你！'],
+  pityMiss: ['保夾也要碰到娃娃才算啦！保夾留到下一把。'],
+  win: ['恭喜恭喜！高手喔！', '夾到啦！拍照打卡記得標我們店！', '這隻跟你很有緣欸'],
+  winRare: ['喔喔！稀有款欸！', '這隻不好夾喔，你很可以！'],
+  winLegend: ['蛤！？那隻我放了三個月沒人夾到欸！', '傳說款！！今天要提早打烊了…'],
+  push: ['推進去也算！技術流喔！', '用推的？你是不是常來？'],
+  lucky: ['掉下來還彈進去？今天運氣爆棚！', '這也行？算你的算你的！'],
+  oneshot: ['第一次就中？你是不是偷練過？'],
+  idle: ['不玩嗎？後面有人在排喔。', '站著看娃娃不會自己掉下來啦～', '投一個嘛，十塊而已'],
+  refill: ['補貨啦～新娃娃上架！'],
+  full: ['一次最多先投 9 枚啦，夾完再投～']
+};
+const MILESTONES = [
+  [100, '你已經花掉一個便當的錢了喔。'],
+  [300, '三百塊了，保夾準備囉～'],
+  [500, '五百塊！夠吃一頓燒肉了欸。'],
+  [1000, '一千塊…你已經是本店 VIP 了（盤子）'],
+  [2000, '兩千了…要不要我直接賣你一隻？'],
+  [5000, '五千塊…這台機器我送你好了。']
+];
+
+const bossText = $('#bossText'), bossCvs = $('#bossFace'), bossCtx = bossCvs.getContext('2d');
+let typeTimer = null, talking = 0;
+function drawBoss(open) { bossCtx.clearRect(0, 0, SPR, SPR); bossCtx.drawImage(open ? BOSS_OPEN : BOSS_CLOSED, 0, 0); }
+function say(text) {
+  clearInterval(typeTimer);
+  let i = 0; bossText.textContent = '';
+  typeTimer = setInterval(() => {
+    i++; bossText.textContent = text.slice(0, i); drawBoss(i % 4 < 2);
+    if (i >= text.length) { clearInterval(typeTimer); drawBoss(false); }
+  }, 38);
+  talking = 0;
+}
+
+/* ============ 成就 ============ */
+const ACHS = [
+  { id: 'first', icon: '🧸', name: '第一隻娃娃', desc: '夾到第一隻娃娃' },
+  { id: 'push', icon: '👉', name: '推推樂', desc: '用推的把娃娃推進洞口' },
+  { id: 'pity', icon: '🚨', name: '保夾受害者', desc: '觸發一次保夾' },
+  { id: 'legend', icon: '👑', name: '傳說降臨', desc: '拿到傳說娃娃' },
+  { id: 'full', icon: '📖', name: '圖鑑全收集', desc: '12 種娃娃全部到手' },
+  { id: 'plate', icon: '🍽️', name: '盤子', desc: '累積花費 1000 元' },
+  { id: 'oneshot', icon: '🎯', name: '一發入魂', desc: '第一次投幣就夾中' }
+];
+function unlock(id) {
+  if (save.ach[id]) return;
+  save.ach[id] = Date.now(); persist();
+  const a = ACHS.find(x => x.id === id);
+  toast(`${a.icon} 成就解鎖：${a.name}`, true); Sfx.ach();
+}
+function toast(msg, isAch) {
+  const el = document.createElement('div'); el.className = 'toast' + (isAch ? ' ach' : ''); el.textContent = msg;
+  $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3200);
+}
+
+/* ============ 遊戲狀態 ============ */
+const cvs = $('#game'), ctx = cvs.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+let prizes = [], nextId = 1;
+let particles = [], popups = [], spawnQueue = [];
+const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, off: null, offTarget: null };
+let mode = 'idle', modeT = 0, timer = ROUND_TIME, credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
+let round = null, dropRequested = false, booted = false;
+const input = { left: false, right: false, tLeft: false, tRight: false };
+
+function rollKind() {
+  const r = Math.random(); const rar = r < RARITY[0].p ? 0 : r < RARITY[0].p + RARITY[1].p ? 1 : 2;
+  return KINDS.indexOf(pick(KINDS.filter(k => k.rar === rar)));
+}
+function addPrize(x, y, kind = rollKind()) {
+  prizes.push({ id: nextId++, x, y, vx: rand(-20, 20), vy: 0, r: PRIZE_R, kind, held: false, carried: false, dropped: false, noArm: 0, flip: Math.random() < .5 });
+}
+
+/* ============ 爪子幾何 ============ */
+function clawGeom() {
+  const c = Math.cos(claw.theta), s = Math.sin(claw.theta);
+  const hx = claw.gx + s * claw.len, hy = RAIL_Y + c * claw.len;
+  const tf = (lx, ly) => ({ x: hx + lx * c + ly * s, y: hy - lx * s + ly * c });
+  const toLocal = (x, y) => { const dx = x - hx, dy = y - hy; return { x: dx * c - dy * s, y: dx * s + dy * c }; };
+  const a = 0.25 + 0.65 * claw.open, b = a - 1.1;
+  const arms = [];
+  for (const side of [-1, 1]) {
+    const p0 = { x: side * 4, y: 8 };
+    const p1 = { x: p0.x + side * Math.sin(a) * 11, y: p0.y + Math.cos(a) * 11 };
+    const p2 = { x: p1.x + side * Math.sin(b) * 9, y: p1.y + Math.cos(b) * 9 };
+    arms.push([tf(p0.x, p0.y), tf(p1.x, p1.y), tf(p2.x, p2.y)]);
+  }
+  return { hx, hy, tf, toLocal, arms, box: [tf(-5, 4), tf(5, 4)] };
+}
+
+/* 圓與線段碰撞：把圓推出去，回傳法向量 */
+function segPush(p, ax, ay, bx, by, rad, vx = 0, vy = 0, apply = true) {
+  const abx = bx - ax, aby = by - ay, L2 = abx * abx + aby * aby || 1e-6;
+  let t = ((p.x - ax) * abx + (p.y - ay) * aby) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const qx = ax + abx * t, qy = ay + aby * t;
+  let dx = p.x - qx, dy = p.y - qy, d = Math.hypot(dx, dy);
+  const min = p.r + rad; if (d >= min) return null;
+  if (d < 1e-4) { dx = 0; dy = -1; d = 1e-4; }
+  const nx = dx / d, ny = dy / d, pen = min - d;
+  if (apply) {
+    p.x += nx * pen; p.y += ny * pen;
+    const rel = (p.vx - vx) * nx + (p.vy - vy) * ny;
+    if (rel < 0) { p.vx -= rel * nx * 1.15; p.vy -= rel * ny * 1.15; }
+  }
+  return { nx, ny, pen };
+}
+
+/* ============ 回合流程 ============ */
+function setMode(m) { mode = m; modeT = 0; }
+
+function insertCoin() {
+  Sfx.ensure();
+  if (credits >= 9) { say(pick(LINES.full)); return; }
+  const before = save.spent;
+  save.spent += COIN; save.pity += COIN; credits++;
+  let line = null, pityNow = false;
+  if (save.pity >= PITY_COST) { save.pity -= PITY_COST; save.armed = true; pityNow = true; unlock('pity'); }
+  for (const [m, txt] of MILESTONES) if (before < m && save.spent >= m) line = txt;
+  if (save.spent >= 1000) unlock('plate');
+  if (pityNow) { say(pick(LINES.pity)); Sfx.alarm(); toast('🚨 保夾啟動！下一把碰到就一定夾得住'); }
+  else { say(line || pick(LINES.coin)); Sfx.coin(); }
+  persist(); updateUI();
+  if (mode === 'idle') startRound();
+}
+
+function startRound() {
+  credits--; save.plays++; persist();
+  round = { guaranteed: save.armed, collected: 0, grabbed: false, fate: null, nearMiss: false, startLen: 0, startGx: 0 };
+  timer = ROUND_TIME; lastBeep = 0; dropRequested = false;
+  claw.open = 1;
+  setMode('move'); updateUI();
+}
+
+function requestDrop() { if (mode === 'move' && modeT > 0.2) dropRequested = true; }
+
+function inGrip(geom, p) {
+  const l = geom.toLocal(p.x, p.y);
+  return round.guaranteed ? (Math.abs(l.x) < 15 && l.y > 2 && l.y < 36) : (Math.abs(l.x) < 11 && l.y > 6 && l.y < 32);
+}
+function findTarget(geom) {
+  let best = null, bd = 1e9;
+  for (const p of prizes) {
+    if (!inGrip(geom, p)) continue;
+    const l = geom.toLocal(p.x, p.y), d = Math.hypot(l.x, l.y - 17);
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+
+function decideFate(p, lx) {
+  if (round.guaranteed) return { hold: true };
+  const strength = rand(0.20, 0.55);
+  const center = clamp(1 - Math.abs(lx) / 11, 0, 1);
+  const swing = clamp(1 - Math.abs(claw.omega) * 0.25, 0.6, 1);
+  const q = strength * (0.4 + 0.6 * center) * swing / KINDS[p.kind].w;
+  const chance = clamp((q - 0.17) * 1.8, 0, 0.65);
+  if (Math.random() < chance) return { hold: true, chance };
+  const r = Math.random();
+  if (r < 0.4) return { hold: false, phase: 'rise', frac: rand(0.2, 0.9), chance };
+  if (r < 0.65) return { hold: false, phase: 'top', chance };
+  return { hold: false, phase: 'travel', frac: rand(0.15, 1.0), chance };
+}
+
+function dropHeld() {
+  const p = claw.held; if (!p) return;
+  p.held = false; p.dropped = true; p.noArm = 0.35;
+  p.vx = claw.vx + rand(-15, 15); p.vy = claw.vy;
+  claw.held = null; claw.open = 0.8;
+  if (mode === 'back' && claw.gx < HOME_X + 60) round.nearMiss = true;
+  Sfx.slip();
+  popups.push({ text: '啊！', x: p.x, y: p.y - 12, life: 1, col: '#ff6b6b' });
+}
+
+function endRound() {
+  if (round.collected === 0) {
+    save.streak++;
+    if (round.guaranteed && !round.grabbed) say(pick(LINES.pityMiss));
+    else if (round.nearMiss) say(pick(LINES.near));
+    else if (save.streak % 5 === 0) say(pick(LINES.streak));
+    else if (!round.grabbed) say(pick(LINES.empty));
+    else say(pick(LINES.fail));
+  } else save.streak = 0;
+  persist();
+  if (prizes.length + spawnQueue.length < 14) {
+    say(pick(LINES.refill));
+    const n = 22 - prizes.length - spawnQueue.length;
+    for (let i = 0; i < n; i++) spawnQueue.push(0.5 + i * 0.18);
+  }
+  setMode('idle'); idleT = 0; autoStartT = 0.9; claw.open = 1;
+  updateUI();
+}
+
+function collect(p) {
+  prizes.splice(prizes.indexOf(p), 1);
+  if (!booted) return; // 開場預先模擬時掉進洞的不算
+  const k = KINDS[p.kind];
+  save.wins++; save.coll[k.id] = (save.coll[k.id] || 0) + 1;
+  if (round) { round.collected++; if (round.guaranteed) save.armed = false; }
+  save.streak = 0;
+  let line;
+  if (save.plays === 1 && save.wins === 1) { line = pick(LINES.oneshot); unlock('oneshot'); }
+  else if (k.rar === 2) line = pick(LINES.winLegend);
+  else if (!p.carried && !p.dropped) line = pick(LINES.push);
+  else if (p.dropped) line = pick(LINES.lucky);
+  else if (k.rar === 1) line = pick(LINES.winRare);
+  else line = pick(LINES.win);
+  say(line);
+  unlock('first');
+  if (k.rar === 2) unlock('legend');
+  if (!p.carried && !p.dropped) unlock('push');
+  if (KINDS.every(kk => save.coll[kk.id])) unlock('full');
+  if (k.rar === 2) Sfx.legend(); else Sfx.win();
+  toast(`獲得 ${k.name}（${RARITY[k.rar].name}）！`);
+  popups.push({ text: `GET! ${k.name}`, x: 92, y: 236, life: 1.8, col: RARITY[k.rar].color });
+  for (let i = 0; i < 40; i++) particles.push({ x: rand(14, 54), y: 290, vx: rand(-60, 90), vy: rand(-220, -90), life: rand(.8, 1.6), col: pick(['#ff5fa2', '#ffd23f', '#3ff0ff', '#5dff7a', '#c08bff']) });
+  persist(); updateUI();
+}
+
+/* ============ 物理步進 ============ */
+function step(dt) {
+  modeT += dt;
+  const prevGv = claw.gv;
+
+  /* 天車移動 */
+  let target = 0;
+  if (mode === 'move') target = ((input.right || input.tRight) - (input.left || input.tLeft)) * MOVE_SPEED;
+  else if (mode === 'back') target = -BACK_SPEED;
+  const acc = 320;
+  claw.gv = claw.gv < target ? Math.min(target, claw.gv + acc * dt) : Math.max(target, claw.gv - acc * dt);
+  claw.gx += claw.gv * dt;
+  if (claw.gx < HOME_X) { claw.gx = HOME_X; claw.gv = 0; }
+  if (claw.gx > RIGHT_LIMIT) { claw.gx = RIGHT_LIMIT; claw.gv = 0; }
+
+  /* 單擺 */
+  const ag = clamp((claw.gv - prevGv) / dt, -600, 600);
+  const L = claw.len + 14 + (claw.held ? 8 : 0);
+  claw.omega += (-(GRAV / L) * Math.sin(claw.theta) - 0.4 * (ag / L) * Math.cos(claw.theta)) * dt;
+  claw.omega *= (1 - 1.6 * dt);
+  claw.theta = clamp(claw.theta + claw.omega * dt, -0.6, 0.6);
+
+  /* 狀態機 */
+  let geom;
+  switch (mode) {
+    case 'idle':
+      idleT += dt;
+      if (credits > 0) { autoStartT -= dt; if (autoStartT <= 0) startRound(); }
+      else if (idleT > 25) { idleT = -35; say(pick(LINES.idle)); }
+      break;
+    case 'move': {
+      timer -= dt;
+      const sec = Math.ceil(timer);
+      if (sec <= 5 && sec !== lastBeep && sec > 0) { lastBeep = sec; Sfx.beep(); }
+      if (timer <= 0 || dropRequested) { setMode('down'); Sfx.drop(); round.startGx = claw.gx; }
+      break;
+    }
+    case 'down': {
+      claw.len = Math.min(MAX_LEN, claw.len + DESCEND_SPEED * dt);
+      geom = clawGeom();
+      let hit = claw.len >= MAX_LEN || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
+      if (!hit && modeT > 0.15) for (const p of prizes) {
+        const l = geom.toLocal(p.x, p.y);
+        const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
+        if (l.y > 4 && bd < p.r + 4.5) { hit = true; break; }
+        if (Math.hypot(p.vx, p.vy) < 40) for (const arm of geom.arms) for (let i = 0; i < 2; i++) {
+          const r = segPush(p, arm[i].x, arm[i].y, arm[i + 1].x, arm[i + 1].y, 1.5, 0, 0, false);
+          if (r && r.ny > 0.6 && r.pen > 1.2) hit = true;
+        }
+        if (hit) break;
+      }
+      if (hit) { round.startLen = claw.len; round.target = findTarget(geom); setMode('close'); Sfx.grab(); }
+      break;
+    }
+    case 'close': {
+      if (modeT < 0.15) break;
+      const before = claw.open;
+      claw.open = Math.max(0, claw.open - dt / 0.7);
+      if (before > HOLD_OPEN && claw.open <= HOLD_OPEN && !claw.held) {
+        geom = clawGeom();
+        const best = round.target && prizes.includes(round.target) && inGrip(geom, round.target) ? round.target : findTarget(geom);
+        if (best) {
+          const l = geom.toLocal(best.x, best.y);
+          claw.held = best; best.held = true; round.grabbed = true;
+          claw.off = { x: l.x, y: l.y }; claw.offTarget = { x: l.x * 0.3, y: 17 };
+          round.fate = decideFate(best, l.x);
+          claw.open = HOLD_OPEN;
+        }
+      }
+      if (claw.held && modeT > 0.55) setMode('up');
+      else if (claw.open <= 0 && modeT > 1.1) setMode('up');
+      break;
+    }
+    case 'up': {
+      claw.len = Math.max(REST_LEN, claw.len - RISE_SPEED * dt);
+      const f = round.fate;
+      if (claw.held && f && !f.hold && f.phase === 'rise') {
+        const prog = (round.startLen - claw.len) / Math.max(1, round.startLen - REST_LEN);
+        if (prog >= f.frac) dropHeld();
+      }
+      if (claw.len <= REST_LEN) { setMode('top'); claw.omega += rand(-0.9, 0.9); }
+      break;
+    }
+    case 'top': {
+      const f = round.fate;
+      if (claw.held && f && !f.hold && f.phase === 'top' && modeT > 0.06) dropHeld();
+      if (modeT > 0.35) setMode('back');
+      break;
+    }
+    case 'back': {
+      const f = round.fate;
+      if (claw.held && f && !f.hold && f.phase === 'travel') {
+        const prog = (round.startGx - claw.gx) / Math.max(1, round.startGx - HOME_X);
+        if (prog >= f.frac * 0.95) dropHeld();
+      }
+      if (claw.gx <= HOME_X + 0.01) { claw.gv = 0; setMode('release'); }
+      break;
+    }
+    case 'release':
+      if (modeT > 0.25) {
+        claw.open = Math.min(1, claw.open + dt / 0.3);
+        if (claw.held && claw.open > 0.65) { const p = claw.held; p.held = false; p.carried = true; p.vx = 0; p.vy = 20; claw.held = null; }
+      }
+      if (modeT > 1.4) setMode('settle');
+      break;
+    case 'settle': {
+      let maxV = 0; for (const p of prizes) maxV = Math.max(maxV, Math.abs(p.vx) + Math.abs(p.vy));
+      if ((maxV < 12 && modeT > 0.3) || modeT > 2.5) endRound();
+      break;
+    }
+  }
+
+  /* 馬達聲 */
+  Sfx.setMotor(Math.abs(claw.gv) > 2 || mode === 'down' || mode === 'up');
+
+  /* 爪子速度、被夾住的娃娃 */
+  geom = clawGeom();
+  claw.vx = (geom.hx - claw.px) / dt; claw.vy = (geom.hy - claw.py) / dt;
+  claw.px = geom.hx; claw.py = geom.hy;
+  if (claw.held) {
+    const k = Math.min(1, 5 * dt);
+    claw.off.x += (claw.offTarget.x - claw.off.x) * k; claw.off.y += (claw.offTarget.y - claw.off.y) * k;
+    const pos = geom.tf(claw.off.x, claw.off.y);
+    claw.held.vx = (pos.x - claw.held.x) / dt; claw.held.vy = (pos.y - claw.held.y) / dt;
+    claw.held.x = pos.x; claw.held.y = pos.y;
+  }
+
+  /* 補貨 */
+  for (let i = spawnQueue.length - 1; i >= 0; i--) {
+    spawnQueue[i] -= dt;
+    if (spawnQueue[i] <= 0) { spawnQueue.splice(i, 1); addPrize(rand(BARRIER_X + 14, GLASS_R - 12), GLASS_T + 14); }
+  }
+
+  /* 娃娃積分 */
+  for (const p of prizes) {
+    if (p.held) continue;
+    p.vy += GRAV * dt;
+    p.vx *= (1 - 0.3 * dt); p.vy *= (1 - 0.1 * dt);
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.noArm > 0) p.noArm -= dt;
+  }
+
+  /* 爪臂推娃娃 */
+  const segs = [];
+  for (const arm of geom.arms) { segs.push([arm[0], arm[1], 1.5]); segs.push([arm[1], arm[2], 1.5]); }
+  segs.push([geom.box[0], geom.box[1], 4]);
+  for (const p of prizes) {
+    if (p.held || p.noArm > 0) continue;
+    if (mode === 'close' && round && p === round.target) continue;
+    for (const [a, b, r] of segs) segPush(p, a.x, a.y, b.x, b.y, r, claw.vx * 0.6, claw.vy * 0.6);
+  }
+
+  /* 娃娃互撞 */
+  for (let it = 0; it < 3; it++) {
+    for (let i = 0; i < prizes.length; i++) for (let j = i + 1; j < prizes.length; j++) {
+      const a = prizes[i], b = prizes[j];
+      let dx = b.x - a.x, dy = b.y - a.y; const min = a.r + b.r, d2 = dx * dx + dy * dy;
+      if (d2 >= min * min) continue;
+      let d = Math.sqrt(d2); if (d < 1e-4) { dx = rand(-1, 1); dy = -1; d = Math.hypot(dx, dy); }
+      const nx = dx / d, ny = dy / d, pen = min - d;
+      const ia = a.held ? 0 : 1 / KINDS[a.kind].w, ib = b.held ? 0 : 1 / KINDS[b.kind].w, is = ia + ib;
+      if (is === 0) continue;
+      a.x -= nx * pen * ia / is; a.y -= ny * pen * ia / is;
+      b.x += nx * pen * ib / is; b.y += ny * pen * ib / is;
+      if (it === 0) {
+        const rvx = b.vx - a.vx, rvy = b.vy - a.vy, rel = rvx * nx + rvy * ny;
+        if (rel < 0) {
+          const jn = -(1.1 * rel) / is;
+          a.vx -= jn * nx * ia; a.vy -= jn * ny * ia; b.vx += jn * nx * ib; b.vy += jn * ny * ib;
+          const tx = -ny, ty = nx, rt = rvx * tx + rvy * ty, jt = -rt * 0.15 / is;
+          a.vx -= jt * tx * ia; a.vy -= jt * ty * ia; b.vx += jt * tx * ib; b.vy += jt * ty * ib;
+        }
+      }
+    }
+  }
+
+  /* 牆、地板、擋板、洞口 */
+  for (let i = prizes.length - 1; i >= 0; i--) {
+    const p = prizes[i];
+    if (p.held) continue;
+    if (p.x < GLASS_L + p.r) { p.x = GLASS_L + p.r; p.vx = Math.abs(p.vx) * 0.3; }
+    if (p.x > GLASS_R - p.r) { p.x = GLASS_R - p.r; p.vx = -Math.abs(p.vx) * 0.3; }
+    if (p.y < GLASS_T + p.r) { p.y = GLASS_T + p.r; p.vy = Math.abs(p.vy) * 0.2; }
+    if (p.x >= BARRIER_X && p.y + p.r > FLOOR) {
+      p.y = FLOOR - p.r;
+      p.vy = p.vy > 60 ? -p.vy * 0.2 : 0;
+      p.vx *= (1 - 5 * dt);
+    }
+    segPush(p, BARRIER_X, BARRIER_TOP, BARRIER_X, FLOOR + 30, 1);
+    if (p.x < BARRIER_X && p.y > FLOOR + 14) collect(p);
+  }
+
+  /* 特效 */
+  for (const q of particles) { q.vy += 300 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; }
+  particles = particles.filter(q => q.life > 0);
+  for (const q of popups) { q.y -= 14 * dt; q.life -= dt; }
+  popups = popups.filter(q => q.life > 0);
+  for (const p of prizes) if (KINDS[p.kind].rar === 2 && Math.random() < dt * 2.5)
+    particles.push({ x: p.x + rand(-9, 9), y: p.y + rand(-9, 9), vx: 0, vy: -10, life: .5, col: '#fff3a8', g: 0, spark: true });
+}
+
+/* ============ 繪圖 ============ */
+const bg = document.createElement('canvas'); bg.width = W; bg.height = H;
+(function paintBg() {
+  const b = bg.getContext('2d');
+  b.fillStyle = '#c92a5c'; b.fillRect(0, 0, W, H);
+  b.fillStyle = '#e8487a'; b.fillRect(0, 0, W, 2); b.fillRect(0, 0, 2, H);
+  b.fillStyle = '#8f1840'; b.fillRect(0, H - 2, W, 2); b.fillRect(W - 2, 0, 2, H);
+  b.fillStyle = '#1a0f30'; b.fillRect(4, 2, W - 8, 18);
+  // 玻璃內部
+  b.fillStyle = '#20164a'; b.fillRect(GLASS_L, GLASS_T, GLASS_R - GLASS_L, GLASS_B - GLASS_T);
+  b.fillStyle = '#251a55'; for (let y = GLASS_T; y < GLASS_T + 40; y += 4) b.fillRect(GLASS_L, y, GLASS_R - GLASS_L, 2);
+  // 後牆愛心圖樣
+  b.fillStyle = '#2c2063';
+  const heart = [[1, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]];
+  for (let y = GLASS_T + 50; y < FLOOR - 10; y += 26) for (let x = GLASS_L + 8 + ((y / 26) % 2) * 13; x < GLASS_R - 6; x += 26) heart.forEach(([hx, hy]) => b.fillRect(x + hx, y + hy, 1, 1));
+  // 地板
+  b.fillStyle = '#4a3585'; b.fillRect(BARRIER_X, FLOOR, GLASS_R - BARRIER_X, GLASS_B - FLOOR);
+  b.fillStyle = '#6c55b0'; b.fillRect(BARRIER_X, FLOOR, GLASS_R - BARRIER_X, 1);
+  b.fillStyle = '#3d2b70'; for (let x = BARRIER_X + 4; x < GLASS_R; x += 8) b.fillRect(x, FLOOR + 4, 4, GLASS_B - FLOOR - 4);
+  // 洞口
+  b.fillStyle = '#0b0618'; b.fillRect(GLASS_L, FLOOR - 2, BARRIER_X - GLASS_L, GLASS_B - FLOOR + 2);
+  for (let x = GLASS_L; x < BARRIER_X; x += 4) { b.fillStyle = (x / 4) % 2 ? '#ffd23f' : '#1b1030'; b.fillRect(x, FLOOR - 4, 4, 2); }
+  // 玻璃外框
+  b.fillStyle = '#0d0820';
+  b.fillRect(GLASS_L - 2, GLASS_T - 2, GLASS_R - GLASS_L + 4, 2); b.fillRect(GLASS_L - 2, GLASS_B, GLASS_R - GLASS_L + 4, 2);
+  b.fillRect(GLASS_L - 2, GLASS_T, 2, GLASS_B - GLASS_T); b.fillRect(GLASS_R, GLASS_T, 2, GLASS_B - GLASS_T);
+  // 下方操作台
+  b.fillStyle = '#a8204c'; b.fillRect(6, GLASS_B + 4, W - 12, H - GLASS_B - 8);
+  b.fillStyle = '#0b0618'; b.fillRect(14, 286, 40, 26);
+  b.fillStyle = '#ffd23f'; b.fillRect(12, 284, 44, 2); b.fillRect(12, 312, 44, 2); b.fillRect(12, 284, 2, 30); b.fillRect(54, 284, 2, 30);
+  b.fillStyle = '#0d0820'; b.fillRect(148, 286, 94, 26);
+  b.fillStyle = '#3a0a14'; b.fillRect(150, 288, 90, 22);
+})();
+const glare = document.createElement('canvas'); glare.width = W; glare.height = H;
+(function paintGlare() {
+  const g = glare.getContext('2d');
+  g.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let y = GLASS_T; y < GLASS_B; y++) { const x = 150 + (GLASS_B - y) * 0.45; if (x < GLASS_R - 4) g.fillRect(x, y, 14, 1); const x2 = x + 22; if (x2 < GLASS_R - 4) g.fillRect(x2, y, 4, 1); }
+})();
+
+function pline(x0, y0, x1, y1, col, w) {
+  x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy; ctx.fillStyle = col; const o = Math.floor(w / 2);
+  for (;;) { ctx.fillRect(x0 - o, y0 - o, w, w); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+}
+function text(str, x, y, col, size = 11, align = 'center', font = 'Cubic11') {
+  ctx.font = `${size}px "${font}", monospace`; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.fillStyle = OUT; ctx.fillText(str, x + 1, y + 1); ctx.fillStyle = col; ctx.fillText(str, x, y);
+}
+function drawPrize(p) {
+  const s = KINDS[p.kind].sprite, x = Math.round(p.x - SPR / 2), y = Math.round(p.y - SPR / 2);
+  if (p.flip) { ctx.save(); ctx.translate(x + SPR, y); ctx.scale(-1, 1); ctx.drawImage(s, 0, 0); ctx.restore(); }
+  else ctx.drawImage(s, x, y);
+}
+function drawClaw(geom) {
+  // 天車軌道與天車
+  ctx.fillStyle = '#0d0820'; ctx.fillRect(GLASS_L, RAIL_Y - 6, GLASS_R - GLASS_L, 5);
+  ctx.fillStyle = '#8f9bb8'; ctx.fillRect(GLASS_L, RAIL_Y - 5, GLASS_R - GLASS_L, 3);
+  const gx = Math.round(claw.gx);
+  ctx.fillStyle = '#0d0820'; ctx.fillRect(gx - 8, RAIL_Y - 9, 16, 9);
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(gx - 7, RAIL_Y - 8, 14, 7);
+  ctx.fillStyle = '#e0a020'; ctx.fillRect(gx - 7, RAIL_Y - 3, 14, 2);
+  // 繩子
+  pline(claw.gx, RAIL_Y, geom.hx, geom.hy, '#cfd6e6', 1);
+  // 爪臂
+  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, OUT, 4); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, OUT, 4); }
+  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#c9d2e6', 2); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#c9d2e6', 2); }
+  // 馬達盒
+  const hx = Math.round(geom.hx), hy = Math.round(geom.hy);
+  ctx.fillStyle = OUT; ctx.fillRect(hx - 7, hy - 2, 14, 11);
+  ctx.fillStyle = '#9aa6c4'; ctx.fillRect(hx - 6, hy - 1, 12, 9);
+  ctx.fillStyle = '#c9d2e6'; ctx.fillRect(hx - 6, hy - 1, 12, 2);
+  ctx.fillStyle = round && round.guaranteed && mode !== 'idle' ? (Math.floor(performance.now() / 150) % 2 ? '#ffd23f' : '#ff3b3b') : '#ff3b3b';
+  ctx.fillRect(hx - 1, hy + 3, 2, 2);
+}
+function render() {
+  const t = performance.now() / 1000;
+  ctx.drawImage(bg, 0, 0);
+  // 招牌燈泡
+  const cols = ['#ffd23f', '#ff5fa2', '#3ff0ff'];
+  for (let x = 8, i = 0; x < W - 6; x += 10, i++) {
+    ctx.fillStyle = cols[(i + Math.floor(t * 4)) % 3]; ctx.fillRect(x, 4, 2, 2); ctx.fillRect(x, 16, 2, 2);
+  }
+  text('PIXEL CLAW', W / 2, 11, '#ffd23f', 8, 'center', 'PressStart');
+  // 洞口提示
+  if (Math.floor(t * 2) % 2) text('▼出口', (GLASS_L + BARRIER_X) / 2, BARRIER_TOP - 10, '#ffd23f', 11);
+  const geom = clawGeom();
+  for (const p of prizes) if (p !== claw.held) drawPrize(p);
+  if (claw.held) drawPrize(claw.held);
+  drawClaw(geom);
+  // 擋板
+  ctx.fillStyle = 'rgba(160,240,255,.35)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, GLASS_B - BARRIER_TOP);
+  ctx.fillStyle = 'rgba(230,255,255,.9)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, 1);
+  ctx.drawImage(glare, 0, 0);
+  // 下方操作台（蓋住掉進洞的娃娃）
+  ctx.drawImage(bg, 0, GLASS_B + 2, W, H - GLASS_B - 2, 0, GLASS_B + 2, W, H - GLASS_B - 2);
+  text('取物口', 34, 299, '#ffd23f', 11);
+  let led;
+  if (mode === 'move') led = `TIME ${String(Math.max(0, Math.ceil(timer))).padStart(2, '0')}`;
+  else led = `CREDIT ${credits}`;
+  ctx.font = '8px "PressStart", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = mode === 'move' && timer <= 5 && Math.floor(t * 4) % 2 ? '#ffd23f' : '#ff3b3b';
+  ctx.fillText(led, 195, 300);
+  // 保夾燈
+  ctx.fillStyle = OUT; ctx.fillRect(66, 290, 72, 18);
+  ctx.fillStyle = save.armed ? (Math.floor(t * 4) % 2 ? '#ffd23f' : '#ff8a2a') : '#3a2a5a'; ctx.fillRect(67, 291, 70, 16);
+  text('保夾', 102, 299, save.armed ? '#1b1030' : '#6c5a96', 11);
+  // 特效
+  for (const q of particles) { ctx.fillStyle = q.col; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.spark ? 1 : 2, q.spark ? 1 : 2); }
+  for (const q of popups) text(q.text, q.x, q.y, q.col, 11);
+  // HUD
+  if (save.armed && Math.floor(t * 3) % 2) text('★ 保夾中 ★', W / 2, 46, '#ffd23f', 11);
+  if (mode === 'idle' && credits === 0 && Math.floor(t * 1.6) % 2) {
+    ctx.fillStyle = 'rgba(13,8,32,.75)'; ctx.fillRect(58, 112, 140, 34);
+    text('INSERT COIN', W / 2, 124, '#5dff7a', 8, 'center', 'PressStart');
+    text('按投幣開始', W / 2, 138, '#f4f0ff', 11);
+  }
+  if (mode === 'move' && timer <= 5) text(String(Math.max(0, Math.ceil(timer))), W / 2, 72, Math.floor(t * 4) % 2 ? '#ff3b3b' : '#ffd23f', 16, 'center', 'PressStart');
+}
+
+/* ============ 介面 ============ */
+const fmt = n => n.toLocaleString('zh-TW');
+function updateUI() {
+  $('#spent').textContent = fmt(save.spent);
+  $('#plays').textContent = fmt(save.plays);
+  $('#wins').textContent = fmt(save.wins);
+  $('#rate').textContent = save.plays ? (save.wins / save.plays * 100).toFixed(save.wins / save.plays >= 0.1 ? 0 : 1) + '%' : '0%';
+  $('#convert').textContent = `這些錢可以買 ${(save.spent / 100).toFixed(1)} 個便當，或 ${(save.spent / 65).toFixed(1)} 杯珍奶。`;
+  $('#pityText').textContent = save.armed ? '保夾中！' : `${save.pity} / ${PITY_COST}`;
+  $('#pityFill').style.width = (save.armed ? 100 : save.pity / PITY_COST * 100) + '%';
+  $('#pityBar').classList.toggle('armed', save.armed);
+  const note = $('#pityNote');
+  note.classList.toggle('armed', save.armed);
+  note.textContent = save.armed ? '爪力全開：只要碰得到娃娃就一定夾得住！' : `再投 ${(PITY_COST - save.pity) / COIN} 次觸發保夾。`;
+  $('#btnMute').textContent = save.muted ? '🔇' : '🔊';
+  $('#btnCoin').firstChild.textContent = credits > 0 ? `投幣 10 元 (${credits})` : '投幣 10 元';
+}
+
+const modal = $('#modal');
+function openModal(title, html, after) {
+  $('#modalTitle').textContent = title; $('#modalBody').innerHTML = html; modal.hidden = false;
+  if (after) after();
+}
+function closeModal() { modal.hidden = true; }
+function openDex() {
+  const got = KINDS.filter(k => save.coll[k.id]).length;
+  let html = `<div class="dex-sum">收集進度 ${got} / ${KINDS.length}｜總共夾到 ${save.wins} 隻｜花了 NT$${fmt(save.spent)}<br>平均一隻 NT$${save.wins ? fmt(Math.round(save.spent / save.wins)) : '—'}（夾娃娃店門口買一隻大概 NT$150）</div><div class="dex">`;
+  KINDS.forEach((k, i) => {
+    const n = save.coll[k.id] || 0;
+    html += `<div class="dex-item"><canvas width="18" height="18" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div></div>`;
+  });
+  html += '</div>';
+  openModal('娃娃櫃', html, () => {
+    document.querySelectorAll('.dex-item canvas').forEach(c => {
+      const k = KINDS[+c.dataset.i], x = c.getContext('2d'); x.drawImage(k.sprite, 0, 0);
+      if (c.dataset.got === '0') { x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#3d2a6b'; x.fillRect(0, 0, 18, 18); }
+    });
+  });
+}
+function openAch() {
+  let html = '<div class="ach">';
+  for (const a of ACHS) {
+    const ok = !!save.ach[a.id];
+    html += `<div class="ach-item${ok ? '' : ' locked'}"><div class="ic">${ok ? a.icon : '🔒'}</div><div><div class="t">${a.name}</div><div class="d">${a.desc}${ok ? '｜' + new Date(save.ach[a.id]).toLocaleDateString('zh-TW') : ''}</div></div></div>`;
+  }
+  html += '</div><div class="danger"><button class="pbtn small" id="btnReset">重置所有紀錄</button></div>';
+  openModal(`成就 ${Object.keys(save.ach).length} / ${ACHS.length}`, html, () => {
+    $('#btnReset').addEventListener('click', () => {
+      if (!confirm('確定要清除花費、娃娃櫃和成就嗎？這個動作不能復原。')) return;
+      const muted = save.muted; save = defSave(); save.muted = muted; save.visited = true; persist(); closeModal(); updateUI(); say('紀錄清空了，重新開始吧！');
+    });
+  });
+}
+
+/* ============ 輸入 ============ */
+const KEY_LEFT = ['ArrowLeft', 'a', 'A'], KEY_RIGHT = ['ArrowRight', 'd', 'D'];
+window.addEventListener('keydown', e => {
+  if (!modal.hidden) { if (e.key === 'Escape') closeModal(); return; }
+  if (KEY_LEFT.includes(e.key)) { input.left = true; e.preventDefault(); }
+  else if (KEY_RIGHT.includes(e.key)) { input.right = true; e.preventDefault(); }
+  else if (e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); if (!e.repeat) requestDrop(); }
+  else if (e.key === 'Enter' || e.key === 'c' || e.key === 'C') { e.preventDefault(); if (!e.repeat) insertCoin(); }
+  else if (e.key === 'm' || e.key === 'M') toggleMute();
+});
+window.addEventListener('keyup', e => {
+  if (KEY_LEFT.includes(e.key)) input.left = false;
+  if (KEY_RIGHT.includes(e.key)) input.right = false;
+});
+window.addEventListener('blur', () => { input.left = input.right = input.tLeft = input.tRight = false; });
+function holdBtn(el, key) {
+  const on = e => { e.preventDefault(); Sfx.ensure(); input[key] = true; el.classList.add('on'); };
+  const off = () => { input[key] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerdown', on);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, off));
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+holdBtn($('#btnLeft'), 'tLeft'); holdBtn($('#btnRight'), 'tRight');
+$('#btnDrop').addEventListener('pointerdown', e => { e.preventDefault(); Sfx.ensure(); requestDrop(); });
+$('#btnCoin').addEventListener('click', insertCoin);
+$('#btnDex').addEventListener('click', openDex);
+$('#btnAch').addEventListener('click', openAch);
+$('#btnMute').addEventListener('click', toggleMute);
+$('#modalClose').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) Sfx.setMotor(false); });
+function toggleMute() { Sfx.ensure(); save.muted = !save.muted; if (save.muted) Sfx.setMotor(false); persist(); updateUI(); }
+
+/* ============ 啟動 ============ */
+for (let i = 0; i < 24; i++) addPrize(72 + (i % 10) * 17 + rand(-3, 3), 120 + Math.floor(i / 10) * 20 + rand(-4, 4));
+for (let i = 0; i < 600; i++) step(STEP); // 先讓娃娃自然堆好
+particles = []; mode = 'idle'; modeT = 0; booted = true;
+claw.px = clawGeom().hx; claw.py = clawGeom().hy;
+drawBoss(false); updateUI();
+say(save.visited && save.spent > 0 ? LINES.back[0].replace('${spent}', fmt(save.spent)) : LINES.welcome[0]);
+save.visited = true; persist();
+
+let acc = 0, last = performance.now();
+function frame(now) {
+  let dt = (now - last) / 1000; last = now; if (dt > 0.1) dt = 0.1;
+  acc += dt; while (acc >= STEP) { step(STEP); acc -= STEP; }
+  render(); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+if (document.fonts) document.fonts.load('11px "Cubic11"').catch(() => {});
+
+/* 給測試用的小後門：在網址加 ?debug 可以在 console 用 PixelClaw 檢查狀態 */
+if (location.search.includes('debug')) window.PixelClaw = { get save() { return save; }, get mode() { return mode; }, get prizes() { return prizes; }, get round() { return round; }, get credits() { return credits; }, claw, insertCoin, requestDrop, input, step, STEP, KINDS };
+})();
+</script>
+</body>
+</html>
