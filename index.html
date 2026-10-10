@@ -17,7 +17,7 @@ h1{font-family:"PressStart","Cubic11",monospace;font-weight:normal;font-size:cla
 h1 small{display:block;font-family:"Cubic11",monospace;font-size:clamp(14px,2vw,18px);color:var(--cyan);text-shadow:2px 2px 0 var(--dark);margin-top:10px;letter-spacing:4px}
 main{display:flex;gap:28px;align-items:flex-start;justify-content:center;padding:14px 10px 10px;width:100%;max-width:1040px}
 .machine{display:flex;flex-direction:column;align-items:center;gap:14px}
-#game{width:min(92vw,512px,calc((100vh - 210px)*0.8));min-width:256px;aspect-ratio:256/320;image-rendering:pixelated;image-rendering:crisp-edges;display:block;border:4px solid var(--dark);box-shadow:0 0 0 4px var(--pink),0 0 36px rgba(255,95,162,.45);background:#000;touch-action:none}
+#game{width:min(92vw,512px,calc((100vh - 210px)*0.8));min-width:256px;aspect-ratio:256/480;image-rendering:pixelated;image-rendering:crisp-edges;display:block;border:4px solid var(--dark);box-shadow:0 0 0 4px var(--pink),0 0 36px rgba(255,95,162,.45);background:#000;touch-action:none}
 .controls{display:grid;grid-template-columns:1fr 1fr 1.5fr 1.5fr;gap:10px;width:100%}
 .pbtn{font-family:inherit;font-size:18px;color:var(--dark);background:var(--yellow);border:none;padding:12px 6px;cursor:pointer;box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45),0 0 0 3px var(--dark);touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity 0.2s, filter 0.2s}
 .pbtn:focus{outline:none}
@@ -104,7 +104,7 @@ footer a{color:var(--cyan)}
 
 <main>
   <section class="machine">
-    <canvas id="game" width="256" height="320" aria-label="夾娃娃機遊戲畫面"></canvas>
+    <canvas id="game" width="256" height="480" aria-label="夾娃娃機遊戲畫面"></canvas>
     <div class="controls">
       <button class="pbtn" id="btnLeft" aria-label="向左">◀<kbd>←/A</kbd></button>
       <button class="pbtn" id="btnRight" aria-label="向右">▶<kbd>→/D</kbd></button>
@@ -180,14 +180,14 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 /* ============ 常數（邏輯像素） ============ */
-const W = 256, H = 320;
-const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 278;
-const FLOOR = 262;                 // 娃娃堆放的地板
-const BARRIER_X = 58, BARRIER_TOP = FLOOR - 40; // 洞口前的壓克力擋板（v1.1 加高，避免娃娃堆自己滾進洞）
+const W = 256, H = 480;
+const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 438;
+const FLOOR = 422;                 // 娃娃堆放的地板
+const BARRIER_X = 58, BARRIER_TOP = FLOOR - 70; // 洞口前的壓克力擋板（v1.1 加高，避免娃娃堆自己滾進洞）
 const RAIL_Y = 34;
 const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
-const MAX_LEN = FLOOR - RAIL_Y - 24;
+function getMaxLen() { return 180 + (save.upgrades?.rope || 0) * 75; }
 const GRAV = 520;
 const MOVE_SPEED = 72, BACK_SPEED = 60, DESCEND_SPEED = 70, RISE_SPEED = 48;
 const PRIZE_R = 8;
@@ -199,7 +199,7 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {} });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0 } });
 let save = defSave();
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) save = Object.assign(defSave(), JSON.parse(raw)); } catch (e) { /* 無痕模式等情況就用記憶體 */ }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
@@ -552,7 +552,7 @@ function collect(p) {
   if (k.rar === 2) Sfx.legend(); else Sfx.win();
   toast(`獲得 ${k.name}（${RARITY[k.rar].name}）！`);
   popups.push({ text: `GET! ${k.name}`, x: 92, y: 236, life: 1.8, col: RARITY[k.rar].color });
-  for (let i = 0; i < 40; i++) particles.push({ x: rand(14, 54), y: 290, vx: rand(-60, 90), vy: rand(-220, -90), life: rand(.8, 1.6), col: pick(['#ff5fa2', '#ffd23f', '#3ff0ff', '#5dff7a', '#c08bff']) });
+  for (let i = 0; i < 40; i++) particles.push({ x: rand(14, 54), y: 450, vx: rand(-60, 90), vy: rand(-220, -90), life: rand(.8, 1.6), col: pick(['#ff5fa2', '#ffd23f', '#3ff0ff', '#5dff7a', '#c08bff']) });
   persist(); updateUI();
 }
 
@@ -594,7 +594,7 @@ function step(dt) {
       break;
     }
     case 'down': {
-      claw.len = Math.min(MAX_LEN, claw.len + DESCEND_SPEED * dt);
+      claw.len = Math.min(getMaxLen(), claw.len + DESCEND_SPEED * dt);
       geom = clawGeom();
       
         if (save.buffs.magnet) {
@@ -603,7 +603,7 @@ function step(dt) {
             if (Math.abs(dx) < 30) p.vx += Math.sign(dx) * 80 * dt;
           }
         }
-        let hit = claw.len >= MAX_LEN || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
+        let hit = claw.len >= getMaxLen() || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
       if (!hit && modeT > 0.15) for (const p of prizes) {
         const l = geom.toLocal(p.x, p.y);
         const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
@@ -719,7 +719,7 @@ function step(dt) {
   for (let it = 0; it < 3; it++) {
     for (let i = 0; i < prizes.length; i++) for (let j = i + 1; j < prizes.length; j++) {
       const a = prizes[i], b = prizes[j];
-      let dx = b.x - a.x, dy = b.y - a.y; const min = a.r + b.r, d2 = dx * dx + dy * dy;
+      let dx = b.x - a.x, dy = b.y - a.y; const min = (a.r || 8) + (b.r || 8), d2 = dx * dx + dy * dy;
       if (d2 >= min * min) continue;
       let d = Math.sqrt(d2); if (d < 1e-4) { dx = rand(-1, 1); dy = -1; d = Math.hypot(dx, dy); }
       const nx = dx / d, ny = dy / d, pen = min - d;
@@ -743,11 +743,22 @@ function step(dt) {
   for (let i = prizes.length - 1; i >= 0; i--) {
     const p = prizes[i];
     if (p.held) continue;
-    if (p.x < GLASS_L + p.r) { p.x = GLASS_L + p.r; p.vx = Math.abs(p.vx) * 0.3; }
-    if (p.x > GLASS_R - p.r) { p.x = GLASS_R - p.r; p.vx = -Math.abs(p.vx) * 0.3; }
-    if (p.y < GLASS_T + p.r) { p.y = GLASS_T + p.r; p.vy = Math.abs(p.vy) * 0.2; }
-    if (p.x >= BARRIER_X && p.y + p.r > FLOOR) {
-      p.y = FLOOR - p.r;
+    if (p.x < GLASS_L + (p.r || 8)) { p.x = GLASS_L + (p.r || 8); p.vx = Math.abs(p.vx) * 0.3; }
+    if (p.x > GLASS_R - (p.r || 8)) { p.x = GLASS_R - (p.r || 8); p.vx = -Math.abs(p.vx) * 0.3; }
+    if (p.y < GLASS_T + (p.r || 8)) { p.y = GLASS_T + (p.r || 8); p.vy = Math.abs(p.vy) * 0.2; }
+    if (p.x >= BARRIER_X && p.y + (p.r || 8) > FLOOR) {
+      p.y = FLOOR - (p.r || 8);
+      if (p.vy > 150 && KINDS[p.kind].bomb && !p.exploded) {
+        p.exploded = true;
+        Sfx.drop();
+        for (const op of prizes) {
+          const dx = op.x - p.x, dy = op.y - p.y, d = Math.hypot(dx, dy);
+          if (d < 80 && d > 0) { op.vx += (dx / d) * 350; op.vy += (dy / d) * 350 - 150; }
+        }
+        for (let i = 0; i < 40; i++) particles.push({ x: p.x, y: p.y, vx: rand(-200, 200), vy: rand(-250, 50), life: rand(0.5, 1.2), col: pick(['#ff3b3b', '#ffd23f', '#ffffff']), spark: true });
+        prizes.splice(prizes.indexOf(p), 1);
+        continue;
+      }
       p.vy = p.vy > 60 ? -p.vy * 0.2 : 0;
       p.vx *= (1 - 5 * dt);
     }
@@ -792,10 +803,10 @@ const bg = document.createElement('canvas'); bg.width = W; bg.height = H;
   b.fillRect(GLASS_L - 2, GLASS_T, 2, GLASS_B - GLASS_T); b.fillRect(GLASS_R, GLASS_T, 2, GLASS_B - GLASS_T);
   // 下方操作台
   b.fillStyle = '#a8204c'; b.fillRect(6, GLASS_B + 4, W - 12, H - GLASS_B - 8);
-  b.fillStyle = '#0b0618'; b.fillRect(14, 286, 40, 26);
-  b.fillStyle = '#ffd23f'; b.fillRect(12, 284, 44, 2); b.fillRect(12, 312, 44, 2); b.fillRect(12, 284, 2, 30); b.fillRect(54, 284, 2, 30);
-  b.fillStyle = '#0d0820'; b.fillRect(148, 286, 94, 26);
-  b.fillStyle = '#3a0a14'; b.fillRect(150, 288, 90, 22);
+  b.fillStyle = '#0b0618'; b.fillRect(14, 446, 40, 26);
+  b.fillStyle = '#ffd23f'; b.fillRect(12, 444, 44, 2); b.fillRect(12, 472, 44, 2); b.fillRect(12, 444, 2, 30); b.fillRect(54, 444, 2, 30);
+  b.fillStyle = '#0d0820'; b.fillRect(148, 446, 94, 26);
+  b.fillStyle = '#3a0a14'; b.fillRect(150, 448, 90, 22);
 })();
 const glare = document.createElement('canvas'); glare.width = W; glare.height = H;
 (function paintGlare() {
@@ -862,17 +873,17 @@ function render() {
   ctx.drawImage(glare, 0, 0);
   // 下方操作台（蓋住掉進洞的娃娃）
   ctx.drawImage(bg, 0, GLASS_B + 2, W, H - GLASS_B - 2, 0, GLASS_B + 2, W, H - GLASS_B - 2);
-  text('取物口', 34, 299, '#ffd23f', 11);
+  text('取物口', 34, 459, '#ffd23f', 11);
   let led;
   if (mode === 'move') led = `TIME ${String(Math.max(0, Math.ceil(timer))).padStart(2, '0')}`;
   else led = `CREDIT ${credits}`;
   ctx.font = '8px "PressStart", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = mode === 'move' && timer <= 5 && Math.floor(t * 4) % 2 ? '#ffd23f' : '#ff3b3b';
-  ctx.fillText(led, 195, 300);
+  ctx.fillText(led, 195, 460);
   // 保夾燈
-  ctx.fillStyle = OUT; ctx.fillRect(66, 290, 72, 18);
-  ctx.fillStyle = save.armed ? (Math.floor(t * 4) % 2 ? '#ffd23f' : '#ff8a2a') : '#3a2a5a'; ctx.fillRect(67, 291, 70, 16);
-  text('保夾', 102, 299, save.armed ? '#1b1030' : '#6c5a96', 11);
+  ctx.fillStyle = OUT; ctx.fillRect(66, 450, 72, 18);
+  ctx.fillStyle = save.armed ? (Math.floor(t * 4) % 2 ? '#ffd23f' : '#ff8a2a') : '#3a2a5a'; ctx.fillRect(67, 451, 70, 16);
+  text('保夾', 102, 459, save.armed ? '#1b1030' : '#6c5a96', 11);
   // 特效
   for (const q of particles) { ctx.fillStyle = q.col; ctx.fillRect(Math.round(q.x), Math.round(q.y), q.spark ? 1 : 2, q.spark ? 1 : 2); }
   for (const q of popups) text(q.text, q.x, q.y, q.col, 11);
@@ -952,20 +963,33 @@ function openDex() {
 
 function openShop() {
   let html = `<div class="dex-sum">使用金幣購買道具。道具會在下次遊戲自動生效。目前持有：${fmt(save.tokens || 0)} 🪙</div><div class="ach">`;
+  save.upgrades = save.upgrades || { rope: 0, str: 0 };
   const items = [
     { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100% (不會滑落)', cost: 150, icon: '💪' },
     { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測點', cost: 50, icon: '🎯' },
-    { id: 'magnet', name: '磁鐵', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' }
+    { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' },
+    { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度', cost: 200 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
+    { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 15%', cost: 250 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 }
+    { id: 'bomb', name: '炸彈娃', rar: 1, w: 1.5, r: 9, bomb: true,
+      shape(p) { const K = '#111', O = '#ff8c00'; p.ell(8, 9, 7, 7, K); p.rect(6, 1, 4, 2, K); p.rect(7, 0, 2, 2, O); },
+      face(p) { p.px(5, 8, '#fff'); p.px(10, 8, '#fff'); p.rect(6, 11, 4, 1, '#fff'); } },
+    { id: 'anvil', name: '重力方塊', rar: 2, w: 3.5, r: 12, // Irregular / Heavy
+      shape(p) { const G = '#666', D = '#444'; p.rect(1, 4, 14, 10, G); p.rect(0, 14, 16, 3, D); },
+      face(p) { p.px(5, 9, '#000'); p.px(10, 9, '#000'); p.rect(7, 12, 2, 1, '#000'); } }
   ];
   items.forEach(it => {
-    const owned = save.buffs[it.id];
-    html += `<div class="ach-item ${owned ? 'locked' : ''}">
+    const isUpg = it.isUpg;
+    const lvl = isUpg ? (save.upgrades[it.key] || 0) : 0;
+    const maxed = isUpg && lvl >= it.max;
+    const owned = !isUpg && save.buffs[it.id];
+    const disabled = owned || maxed;
+    html += `<div class="ach-item ${disabled ? 'locked' : ''}">
       <div class="ic">${it.icon}</div>
       <div style="flex:1">
-        <div class="t" style="color:var(--yellow)">${it.name} ${owned ? '(已擁有)' : ''}</div>
+        <div class="t" style="color:var(--yellow)">${it.name} ${isUpg ? `(Lv.${lvl}/${it.max})` : (owned ? '(已擁有)' : '')}</div>
         <div class="d">${it.desc}</div>
       </div>
-      <button class="pbtn small btn-buy" data-id="${it.id}" data-cost="${it.cost}" ${owned ? 'disabled' : ''}>${it.cost}🪙</button>
+      <button class="pbtn small btn-buy" data-id="${it.id}" data-cost="${it.cost}" ${disabled ? 'disabled' : ''}>${maxed ? 'MAX' : it.cost + '🪙'}</button>
     </div>`;
   });
   html += '</div>';
@@ -973,11 +997,18 @@ function openShop() {
     document.querySelectorAll('.btn-buy').forEach(b => b.addEventListener('click', e => {
       const id = e.target.dataset.id;
       const cost = parseInt(e.target.dataset.cost);
-      if ((save.tokens || 0) >= cost && !save.buffs[id]) {
+      const it = items.find(i => i.id === id);
+      const isUpg = it.isUpg;
+      const lvl = isUpg ? (save.upgrades[it.key] || 0) : 0;
+      const maxed = isUpg && lvl >= it.max;
+      const owned = !isUpg && save.buffs[it.id];
+      
+      if ((save.tokens || 0) >= cost && !owned && !maxed) {
         save.tokens -= cost;
-        save.buffs[id] = true;
+        if (isUpg) save.upgrades[it.key] = lvl + 1;
+        else save.buffs[id] = true;
         Sfx.ensure(); Sfx.win(); persist(); updateUI(); openShop();
-      } else if (!save.buffs[id]) {
+      } else if (!owned && !maxed) {
         alert('金幣不足！快去娃娃櫃賣掉重複的娃娃吧。');
       }
     }));
@@ -1035,7 +1066,20 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) Sfx.s
 function toggleMute() { Sfx.ensure(); save.muted = !save.muted; if (save.muted) Sfx.setMotor(false); persist(); updateUI(); }
 
 /* ============ 啟動 ============ */
-for (let i = 0; i < 24; i++) addPrize(72 + (i % 10) * 17 + rand(-3, 3), 120 + Math.floor(i / 10) * 20 + rand(-4, 4));
+
+  // Spawn 65 dolls layered
+  // Bottom: Legends/Heavies, Middle: Rares, Top: Normals
+  for (let i = 0; i < 65; i++) {
+    let layerKind = -1;
+    const r = Math.random();
+    if (i < 20) { // Bottom
+      layerKind = r < 0.2 ? 13 : (r < 0.4 ? 12 : -1); // 13=anvil, 12=bomb
+    } else if (i < 45) { // Middle
+      layerKind = r < 0.15 ? 12 : -1;
+    }
+    addPrize(72 + (i % 10) * 17 + rand(-5, 5), FLOOR - 240 + Math.floor(i / 10) * 24 + rand(-5, 5), layerKind);
+  }
+
 for (let i = 0; i < 600; i++) step(STEP); // 先讓娃娃自然堆好
 particles = []; mode = 'idle'; modeT = 0; booted = true;
 claw.px = clawGeom().hx; claw.py = clawGeom().hy;
