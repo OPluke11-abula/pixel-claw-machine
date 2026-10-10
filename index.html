@@ -189,9 +189,10 @@ const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
 function getMaxLen() { return 180 + (save.upgrades?.rope || 0) * 75; }
 const GRAV = 520;
+function getSpeed(base) { return base * (1 + ((save.upgrades || {}).speed || 0) * 0.15); }
 const MOVE_SPEED = 72, BACK_SPEED = 60, DESCEND_SPEED = 70, RISE_SPEED = 48;
 const PRIZE_R = 8;
-const ROUND_TIME = 15;
+function getRoundTime() { return 15 + ((save.upgrades || {}).time || 0) * 3; }
 const COIN = 10, PITY_COST = 300;
 const HOLD_OPEN = 0.45;
 const STEP = 1 / 120;
@@ -413,7 +414,7 @@ ctx.imageSmoothingEnabled = false;
 let prizes = [], nextId = 1;
 let particles = [], popups = [], spawnQueue = [];
 const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, off: null, offTarget: null };
-let mode = 'idle', modeT = 0, timer = ROUND_TIME, credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
+let mode = 'idle', modeT = 0, timer = getRoundTime(), credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
 let round = null, dropRequested = false, booted = false;
 const input = { left: false, right: false, tLeft: false, tRight: false };
 
@@ -480,7 +481,7 @@ function insertCoin() {
 function startRound() {
   credits--; save.plays++; persist();
   round = { guaranteed: save.armed, collected: 0, grabbed: false, fate: null, nearMiss: false, startLen: 0, startGx: 0 };
-  timer = ROUND_TIME; lastBeep = 0; dropRequested = false;
+  timer = getRoundTime(); lastBeep = 0; dropRequested = false;
   claw.open = 1;
   setMode('move'); updateUI();
 }
@@ -609,7 +610,7 @@ function step(dt) {
       break;
     }
     case 'down': {
-      claw.len = Math.min(getMaxLen(), claw.len + DESCEND_SPEED * dt);
+      claw.len = Math.min(getMaxLen(), claw.len + getSpeed(DESCEND_SPEED) * dt);
       geom = clawGeom();
       
         if (save.buffs.magnet) {
@@ -652,7 +653,7 @@ function step(dt) {
       break;
     }
     case 'up': {
-      claw.len = Math.max(REST_LEN, claw.len - RISE_SPEED * dt);
+      claw.len = Math.max(REST_LEN, claw.len - getSpeed(RISE_SPEED) * dt);
       const f = round.fate;
       if (claw.held && f && !f.hold && f.phase === 'rise') {
         const prog = (round.startLen - claw.len) / Math.max(1, round.startLen - REST_LEN);
@@ -1015,8 +1016,12 @@ function openShop() {
     { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100% (不會滑落)', cost: 150, icon: '💪' },
     { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測點', cost: 50, icon: '🎯' },
     { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' },
-    { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度', cost: 200 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
-    { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 15%', cost: 250 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 }
+        { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度', cost: 200 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
+    { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 15%', cost: 250 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 },
+    { id: 'upg_time', name: '操作延時', desc: '永久延長單局操作時間 3 秒', cost: 150 * ((save.upgrades.time || 0) + 1), icon: '⏳', isUpg: true, key: 'time', max: 3 },
+    { id: 'upg_speed', name: '高速齒輪', desc: '永久提升爪子移動速度 15%', cost: 200 * ((save.upgrades.speed || 0) + 1), icon: '⚡', isUpg: true, key: 'speed', max: 3 },
+    { id: 'upg_size', name: '巨型爪', desc: '永久微幅擴大爪子包覆判定', cost: 300 * ((save.upgrades.size || 0) + 1), icon: '🧤', isUpg: true, key: 'size', max: 3 },
+    { id: 'upg_luck', name: '幸運星', desc: '機台補貨時，更容易掉落稀有以上娃娃', cost: 400 * ((save.upgrades.luck || 0) + 1), icon: '🌟', isUpg: true, key: 'luck', max: 3 }
   ];
   items.forEach(it => {
     const isUpg = it.isUpg;
