@@ -52,7 +52,7 @@ main{display:flex;gap:28px;align-items:flex-start;justify-content:center;padding
 .pity-note{font-size:12px;color:#a99bd0;margin-top:8px;min-height:1.4em}
 .pity-note.armed{color:var(--yellow)}
 @keyframes blink{50%{opacity:.45}}
-.row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px}
 .help{font-size:13px;line-height:1.75;color:#cbbcf0}
 .help b{color:var(--yellow);font-weight:normal}
 footer{font-size:12px;color:#8f80bb;padding:18px 10px 26px;text-align:center;line-height:1.8}
@@ -124,6 +124,7 @@ footer a{color:var(--cyan)}
 
     <div class="card">
       <div class="stat-main"><span>累積花費</span><div class="money">NT$<b id="spent">0</b></div></div>
+      <div class="stat-main" style="margin-top:12px"><span>持有金幣</span><div class="money" style="color:var(--cyan)">🪙 <b id="tokens">0</b></div></div>
       <div class="stat-grid">
         <div><b id="plays">0</b><small>遊玩次數</small></div>
         <div><b id="wins">0</b><small>夾到娃娃</small></div>
@@ -140,6 +141,7 @@ footer a{color:var(--cyan)}
 
     <div class="row">
       <button class="pbtn small" id="btnDex">娃娃櫃</button>
+      <button class="pbtn small" id="btnShop">商店</button>
       <button class="pbtn small" id="btnAch">成就</button>
       <button class="pbtn small" id="btnMute" aria-label="音效開關">🔊</button>
     </div>
@@ -197,7 +199,7 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {} });
 let save = defSave();
 try { const raw = localStorage.getItem(SAVE_KEY); if (raw) save = Object.assign(defSave(), JSON.parse(raw)); } catch (e) { /* 無痕模式等情況就用記憶體 */ }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
@@ -486,11 +488,11 @@ function findTarget(geom) {
 
 function decideFate(p, lx) {
   if (round.guaranteed) return { hold: true };
-  const strength = rand(0.20, 0.55);
+  const strength = save.buffs.strong ? 1.0 : rand(0.15, 0.45);
   const center = clamp(1 - Math.abs(lx) / 11, 0, 1);
   const swing = clamp(1 - Math.abs(claw.omega) * 0.25, 0.6, 1);
   const q = strength * (0.4 + 0.6 * center) * swing / KINDS[p.kind].w;
-  const chance = clamp((q - 0.17) * 1.8, 0, 0.65);
+  const chance = clamp((q - 0.20) * 1.5, 0, 0.55);
   if (Math.random() < chance) return { hold: true, chance };
   const r = Math.random();
   if (r < 0.4) return { hold: false, phase: 'rise', frac: rand(0.2, 0.9), chance };
@@ -509,7 +511,8 @@ function dropHeld() {
 }
 
 function endRound() {
-  if (round.collected === 0) {
+  save.buffs = {};
+    if (round.collected === 0) {
     save.streak++;
     if (round.guaranteed && !round.grabbed) say(pick(LINES.pityMiss));
     else if (round.nearMiss) say(pick(LINES.near));
@@ -593,7 +596,14 @@ function step(dt) {
     case 'down': {
       claw.len = Math.min(MAX_LEN, claw.len + DESCEND_SPEED * dt);
       geom = clawGeom();
-      let hit = claw.len >= MAX_LEN || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
+      
+        if (save.buffs.magnet) {
+          for (const p of prizes) {
+            const dx = geom.hx - p.x;
+            if (Math.abs(dx) < 30) p.vx += Math.sign(dx) * 80 * dt;
+          }
+        }
+        let hit = claw.len >= MAX_LEN || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
       if (!hit && modeT > 0.15) for (const p of prizes) {
         const l = geom.toLocal(p.x, p.y);
         const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
@@ -845,6 +855,7 @@ function render() {
   for (const p of prizes) if (p !== claw.held) drawPrize(p);
   if (claw.held) drawPrize(claw.held);
   drawClaw(geom);
+    if(save.buffs.radar && mode === 'move') text('▼', clawGeom().hx, FLOOR-5, '#ff3b3b', 10);
   // 擋板
   ctx.fillStyle = 'rgba(160,240,255,.35)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, GLASS_B - BARRIER_TOP);
   ctx.fillStyle = 'rgba(230,255,255,.9)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, 1);
@@ -879,6 +890,7 @@ function render() {
 const fmt = n => n.toLocaleString('zh-TW');
 function updateUI() {
   $('#spent').textContent = fmt(save.spent);
+  $('#tokens').textContent = fmt(save.tokens || 0);
   $('#plays').textContent = fmt(save.plays);
   $('#wins').textContent = fmt(save.wins);
   $('#rate').textContent = save.plays ? (save.wins / save.plays * 100).toFixed(save.wins / save.plays >= 0.1 ? 0 : 1) + '%' : '0%';
@@ -910,16 +922,68 @@ function openDex() {
   let html = `<div class="dex-sum">收集進度 ${got} / ${KINDS.length}｜總共夾到 ${save.wins} 隻｜花了 NT$${fmt(save.spent)}<br>平均一隻 NT$${save.wins ? fmt(Math.round(save.spent / save.wins)) : '—'}（夾娃娃店門口買一隻大概 NT$150）</div><div class="dex">`;
   KINDS.forEach((k, i) => {
     const n = save.coll[k.id] || 0;
-    html += `<div class="dex-item"><canvas width="18" height="18" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div></div>`;
+    const price = k.rar === 2 ? 100 : k.rar === 1 ? 30 : 10;
+    html += `<div class="dex-item"><canvas width="18" height="18" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div>`;
+    if (n > 0) html += `<button class="pbtn small btn-sell" data-i="${i}" style="margin-top:6px;width:100%;font-size:11px;padding:4px">賣出 +${price}🪙</button>`;
+    html += `</div>`;
   });
   html += '</div>';
-  openModal('娃娃櫃', html, () => {
+  openModal('娃娃櫃 (換金幣)', html, () => {
     document.querySelectorAll('.dex-item canvas').forEach(c => {
-      const k = KINDS[+c.dataset.i], x = c.getContext('2d'); x.drawImage(k.sprite, 0, 0);
-      if (c.dataset.got === '0') { x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#3d2a6b'; x.fillRect(0, 0, 18, 18); }
+      const k = KINDS[c.dataset.i];
+      const cx = c.getContext('2d');
+      cx.imageSmoothingEnabled = false;
+      cx.drawImage(k.img, 0, 0);
+      if (c.dataset.got === '0') {
+        cx.globalCompositeOperation = 'source-in';
+        cx.fillStyle = '#080414'; cx.fillRect(0, 0, 18, 18);
+      }
     });
+    document.querySelectorAll('.btn-sell').forEach(b => b.addEventListener('click', e => {
+      const k = KINDS[e.target.dataset.i];
+      if (save.coll[k.id] > 0) {
+        save.coll[k.id]--;
+        save.tokens = (save.tokens || 0) + (k.rar === 2 ? 100 : k.rar === 1 ? 30 : 10);
+        Sfx.ensure(); Sfx.win(); persist(); updateUI(); openDex();
+      }
+    }));
   });
 }
+
+function openShop() {
+  let html = `<div class="dex-sum">使用金幣購買道具。道具會在下次遊戲自動生效。目前持有：${fmt(save.tokens || 0)} 🪙</div><div class="ach">`;
+  const items = [
+    { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100% (不會滑落)', cost: 150, icon: '💪' },
+    { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測點', cost: 50, icon: '🎯' },
+    { id: 'magnet', name: '磁鐵', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' }
+  ];
+  items.forEach(it => {
+    const owned = save.buffs[it.id];
+    html += `<div class="ach-item ${owned ? 'locked' : ''}">
+      <div class="ic">${it.icon}</div>
+      <div style="flex:1">
+        <div class="t" style="color:var(--yellow)">${it.name} ${owned ? '(已擁有)' : ''}</div>
+        <div class="d">${it.desc}</div>
+      </div>
+      <button class="pbtn small btn-buy" data-id="${it.id}" data-cost="${it.cost}" ${owned ? 'disabled' : ''}>${it.cost}🪙</button>
+    </div>`;
+  });
+  html += '</div>';
+  openModal('金幣商店', html, () => {
+    document.querySelectorAll('.btn-buy').forEach(b => b.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      const cost = parseInt(e.target.dataset.cost);
+      if ((save.tokens || 0) >= cost && !save.buffs[id]) {
+        save.tokens -= cost;
+        save.buffs[id] = true;
+        Sfx.ensure(); Sfx.win(); persist(); updateUI(); openShop();
+      } else if (!save.buffs[id]) {
+        alert('金幣不足！快去娃娃櫃賣掉重複的娃娃吧。');
+      }
+    }));
+  });
+}
+
 function openAch() {
   let html = '<div class="ach">';
   for (const a of ACHS) {
@@ -961,6 +1025,7 @@ holdBtn($('#btnLeft'), 'tLeft'); holdBtn($('#btnRight'), 'tRight');
 $('#btnDrop').addEventListener('pointerdown', e => { e.preventDefault(); Sfx.ensure(); requestDrop(); });
 $('#btnCoin').addEventListener('click', insertCoin);
 $('#btnDex').addEventListener('click', openDex);
+  $('#btnShop').addEventListener('click', openShop);
 $('#btnAch').addEventListener('click', openAch);
 $('#btnMute').addEventListener('click', toggleMute);
 $('#modalClose').addEventListener('click', closeModal);
