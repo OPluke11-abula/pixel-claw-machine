@@ -291,7 +291,7 @@ const KINDS = [
       shape(p) { const G = '#32cd32'; p.ell(8, 10, 7, 5, G); p.ell(8, 8, 5, 4, '#7cfc00'); },
       face(p) { eyes(p, 6, 10, 11); p.px(8, 12, OUT); } }
   ];
-KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face); });
+KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face, k); });
 
 /* 台主頭像（兩格嘴型） */
 function bossShape(p) {
@@ -624,7 +624,7 @@ function step(dt) {
       if (!hit && modeT > 0.15) for (const p of prizes) {
         const l = geom.toLocal(p.x, p.y);
         const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
-        if (l.y > 4 && bd < p.r + 4.5) { hit = true; break; }
+        if (l.y > 4 && bd < (p.r || 8) / geom.S + 4.5) { hit = true; break; }
         if (Math.hypot(p.vx, p.vy) < 40) for (const arm of geom.arms) for (let i = 0; i < 2; i++) {
           const r = segPush(p, arm[i].x, arm[i].y, arm[i + 1].x, arm[i + 1].y, 1.5, 0, 0, false);
           if (r && r.ny > 0.6 && r.pen > 1.2) hit = true;
