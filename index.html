@@ -207,7 +207,7 @@ function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save));
 
 /* ============ 像素圖產生器 ============ */
 const SPR = 18; // 16x16 圖案 + 外框各 1px
-function buildSprite(shape, face) {
+function buildSprite(shape, face, kind) {
   const N = SPR, g = new Array(N * N).fill(null);
   const painter = arr => ({
     px(x, y, c) { x += 1; y += 1; if (x >= 0 && y >= 0 && x < N && y < N) arr[y * N + x] = c; },
