@@ -271,10 +271,25 @@ const KINDS = [
   { id: 'lucky', name: '金色招財貓', rar: 2, w: 1.5,
     shape(p) { const G = '#ffd23f'; catEars(p, G); p.ell(8, 10, 6.6, 5.6, G); p.ell(13.6, 5.6, 1.8, 2.3, G); p.rect(4, 13, 8, 1, '#e8336b'); p.px(5, 6, '#fff3a8'); p.px(6, 6, '#fff3a8'); },
     face(p) { p.px(4, 9, OUT); p.px(5, 8, OUT); p.px(6, 9, OUT); p.px(9, 9, OUT); p.px(10, 8, OUT); p.px(11, 9, OUT); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(8, 14, '#e0a020'); p.px(7, 14, '#e0a020'); blush(p, 11); } },
-  { id: 'mimic', name: '寶箱怪', rar: 2, w: 1.5,
+  { id: 'mimic', name: '寶箱怪', rar: 2, jackpot: true, w: 1.5,
     shape(p) { p.rect(2, 3, 12, 12, '#a8642a'); p.clear(2, 3); p.clear(13, 3); p.rect(3, 3, 10, 1, '#ffd23f'); p.rect(2, 8, 12, 2, '#2a0a1a'); p.rect(7, 11, 2, 2, '#ffd23f'); p.rect(2, 14, 12, 1, '#6e3a14'); },
-    face(p) { for (const x of [3, 5, 9, 11]) p.px(x, 8, '#fff'); for (const x of [4, 10, 12]) p.px(x, 9, '#fff'); p.rect(6, 9, 3, 1, PINK); p.px(5, 5, '#ff3b3b'); p.px(10, 5, '#ff3b3b'); p.px(4, 4, OUT); p.px(11, 4, OUT); } }
-];
+    face(p) { for (const x of [3, 5, 9, 11]) p.px(x, 8, '#fff'); for (const x of [4, 10, 12]) p.px(x, 9, '#fff'); p.rect(6, 9, 3, 1, PINK); p.px(5, 5, '#ff3b3b'); p.px(10, 5, '#ff3b3b'); p.px(4, 4, OUT); p.px(11, 4, OUT); } },
+    { id: 'bomb', name: '炸彈娃', rar: 1, w: 1.5, r: 9, bomb: true,
+      shape(p) { const K = '#111', O = '#ff8c00'; p.ell(8, 9, 7, 7, K); p.rect(6, 1, 4, 2, K); p.rect(7, 0, 2, 2, O); },
+      face(p) { p.px(5, 8, '#fff'); p.px(10, 8, '#fff'); p.rect(6, 11, 4, 1, '#fff'); } },
+    { id: 'anvil', name: '重力磚塊', rar: 2, w: 3.5, r: 12,
+      shape(p) { const G = '#666', D = '#444'; p.rect(1, 4, 14, 10, G); p.rect(0, 14, 16, 3, D); },
+      face(p) { p.px(5, 9, '#000'); p.px(10, 9, '#000'); p.rect(7, 12, 2, 1, '#000'); } },
+    { id: 'balloon', name: '氣球娃', rar: 1, w: 0.5, r: 8, balloon: true,
+      shape(p) { const R = '#ff4a4a'; p.ell(8, 8, 6.5, 7.5, R); p.px(8, 15, R); p.rect(7, 16, 3, 1, '#fff'); },
+      face(p) { eyes(p, 5, 10, 8); blush(p, 10, 4, 11); } },
+    { id: 'magnet_doll', name: '引力星', rar: 1, w: 2.0, r: 10, magnetDoll: true,
+      shape(p) { const P = '#8a2be2', S = '#da70d6'; p.ell(8, 8, 8, 8, P); p.ell(8, 8, 4, 4, S); },
+      face(p) { p.px(7, 8, '#fff'); p.px(9, 8, '#fff'); } },
+    { id: 'bouncy_slime', name: '跳跳史萊姆', rar: 0, w: 0.8, r: 8, slime: true,
+      shape(p) { const G = '#32cd32'; p.ell(8, 10, 7, 5, G); p.ell(8, 8, 5, 4, '#7cfc00'); },
+      face(p) { eyes(p, 6, 10, 11); p.px(8, 12, OUT); } }
+  ];
 KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face); });
 
 /* 台主頭像（兩格嘴型） */
@@ -699,7 +714,7 @@ function step(dt) {
   /* 娃娃積分 */
   for (const p of prizes) {
     if (p.held) continue;
-    p.vy += GRAV * dt;
+    p.vy += (KINDS[p.kind].balloon ? -GRAV * 0.15 : GRAV) * dt;
     p.vx *= (1 - 0.3 * dt); p.vy *= (1 - 0.1 * dt);
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.noArm > 0) p.noArm -= dt;
@@ -716,7 +731,19 @@ function step(dt) {
   }
 
   /* 娃娃互撞 */
-  for (let it = 0; it < 3; it++) {
+  
+    // Special Dolls updates
+    for (const p of prizes) {
+      if (KINDS[p.kind].magnetDoll && !p.held && p.y > FLOOR - 80) {
+        for (const op of prizes) {
+          if (op !== p) {
+            const dx = p.x - op.x, dy = p.y - op.y, d = Math.hypot(dx, dy);
+            if (d < 50 && d > 10) { op.vx += (dx / d) * 60 * dt; op.vy += (dy / d) * 60 * dt; }
+          }
+        }
+      }
+    }
+    for (let it = 0; it < 3; it++) {
     for (let i = 0; i < prizes.length; i++) for (let j = i + 1; j < prizes.length; j++) {
       const a = prizes[i], b = prizes[j];
       let dx = b.x - a.x, dy = b.y - a.y; const min = (a.r || 8) + (b.r || 8), d2 = dx * dx + dy * dy;
@@ -759,7 +786,7 @@ function step(dt) {
         prizes.splice(prizes.indexOf(p), 1);
         continue;
       }
-      p.vy = p.vy > 60 ? -p.vy * 0.2 : 0;
+      p.vy = p.vy > 60 ? -p.vy * (KINDS[p.kind].slime ? 0.85 : 0.2) : 0;
       p.vx *= (1 - 5 * dt);
     }
     segPush(p, BARRIER_X, BARRIER_TOP, BARRIER_X, FLOOR + 30, 1);
@@ -930,16 +957,36 @@ function openModal(title, html, after) {
 function closeModal() { modal.hidden = true; }
 function openDex() {
   const got = KINDS.filter(k => save.coll[k.id]).length;
-  let html = `<div class="dex-sum">收集進度 ${got} / ${KINDS.length}｜總共夾到 ${save.wins} 隻｜花了 NT$${fmt(save.spent)}<br>平均一隻 NT$${save.wins ? fmt(Math.round(save.spent / save.wins)) : '—'}（夾娃娃店門口買一隻大概 NT$150）</div><div class="dex">`;
+  let html = `<div class="dex-sum" style="position:relative">收集進度 ${got} / ${KINDS.length}｜夾到 ${save.wins} 隻｜花費 NT$${fmt(save.spent)}<br>
+  <button class="pbtn small" id="btnSellAll" style="position:absolute; right:0; top:0; background:var(--green)">一鍵出售重複娃</button></div><div class="dex">`;
   KINDS.forEach((k, i) => {
     const n = save.coll[k.id] || 0;
-    const price = k.rar === 2 ? 100 : k.rar === 1 ? 30 : 10;
+    const price = k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20;
     html += `<div class="dex-item"><canvas width="18" height="18" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div>`;
     if (n > 0) html += `<button class="pbtn small btn-sell" data-i="${i}" style="margin-top:6px;width:100%;font-size:11px;padding:4px">賣出 +${price}🪙</button>`;
     html += `</div>`;
   });
   html += '</div>';
   openModal('娃娃櫃 (換金幣)', html, () => {
+    const btnSellAll = $('#btnSellAll');
+    if (btnSellAll) btnSellAll.addEventListener('click', () => {
+      let earned = 0;
+      KINDS.forEach(k => {
+        if (save.coll[k.id] > 1) {
+          const excess = save.coll[k.id] - 1;
+          save.coll[k.id] = 1;
+          earned += excess * (k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20);
+        }
+      });
+      if (earned > 0) {
+        save.tokens = (save.tokens || 0) + earned;
+        Sfx.ensure(); Sfx.win(); persist(); updateUI(); openDex();
+        alert(`已出售所有重複娃娃，獲得 ${earned} 🪙！`);
+      } else {
+        alert('沒有重複的娃娃可以出售喔！');
+      }
+    });
+
     document.querySelectorAll('.dex-item canvas').forEach(c => {
       const k = KINDS[c.dataset.i];
       const cx = c.getContext('2d');
@@ -954,7 +1001,7 @@ function openDex() {
       const k = KINDS[e.target.dataset.i];
       if (save.coll[k.id] > 0) {
         save.coll[k.id]--;
-        save.tokens = (save.tokens || 0) + (k.rar === 2 ? 100 : k.rar === 1 ? 30 : 10);
+        save.tokens = (save.tokens || 0) + (k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20);
         Sfx.ensure(); Sfx.win(); persist(); updateUI(); openDex();
       }
     }));
@@ -970,12 +1017,6 @@ function openShop() {
     { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' },
     { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度', cost: 200 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
     { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 15%', cost: 250 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 }
-    { id: 'bomb', name: '炸彈娃', rar: 1, w: 1.5, r: 9, bomb: true,
-      shape(p) { const K = '#111', O = '#ff8c00'; p.ell(8, 9, 7, 7, K); p.rect(6, 1, 4, 2, K); p.rect(7, 0, 2, 2, O); },
-      face(p) { p.px(5, 8, '#fff'); p.px(10, 8, '#fff'); p.rect(6, 11, 4, 1, '#fff'); } },
-    { id: 'anvil', name: '重力方塊', rar: 2, w: 3.5, r: 12, // Irregular / Heavy
-      shape(p) { const G = '#666', D = '#444'; p.rect(1, 4, 14, 10, G); p.rect(0, 14, 16, 3, D); },
-      face(p) { p.px(5, 9, '#000'); p.px(10, 9, '#000'); p.rect(7, 12, 2, 1, '#000'); } }
   ];
   items.forEach(it => {
     const isUpg = it.isUpg;
@@ -1073,9 +1114,11 @@ function toggleMute() { Sfx.ensure(); save.muted = !save.muted; if (save.muted) 
     let layerKind = -1;
     const r = Math.random();
     if (i < 20) { // Bottom
-      layerKind = r < 0.2 ? 13 : (r < 0.4 ? 12 : -1); // 13=anvil, 12=bomb
+      layerKind = r < 0.15 ? 13 : (r < 0.3 ? 12 : (r < 0.45 ? 11 : -1)); // anvil, bomb, mimic
     } else if (i < 45) { // Middle
-      layerKind = r < 0.15 ? 12 : -1;
+      layerKind = r < 0.15 ? 14 : (r < 0.3 ? 15 : (r < 0.45 ? 12 : -1)); // balloon, magnet, bomb
+    } else { // Top
+      layerKind = r < 0.2 ? 16 : -1; // slime
     }
     addPrize(72 + (i % 10) * 17 + rand(-5, 5), FLOOR - 240 + Math.floor(i / 10) * 24 + rand(-5, 5), layerKind);
   }
