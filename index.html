@@ -224,7 +224,7 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const W = 256, H = 480;
 const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 438;
 const FLOOR = 422;                 // 娃娃堆放的地板
-const BARRIER_X = 58, BARRIER_TOP = FLOOR - 205; // 洞口前的壓克力擋板（加高至 205px 完整保護 95 隻娃娃山堆，避免頂層娃娃滾落出銃）
+const BARRIER_X = 58, BARRIER_TOP = FLOOR - 215; // 洞口前的壓克力擋板（加高至 215px 完整保護 95 隻娃娃山堆，避免頂層娃娃滾落出銃）
 const RAIL_Y = 34;
 const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
@@ -241,7 +241,7 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0, visitedThemes: { animal: true } });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0, visitedThemes: { animal: true }, machines: {} });
 let save = defSave();
 try {
   const raw = localStorage.getItem(SAVE_KEY);
@@ -254,6 +254,7 @@ try {
     save.lastRefill = loaded.lastRefill || 0;
     save.visitedThemes = Object.assign({ animal: true }, loaded.visitedThemes || {});
     if (save.theme) save.visitedThemes[save.theme] = true;
+    save.machines = loaded.machines || {};
   }
 } catch (e) { /* 無痕模式等情況就用記憶體 */ }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
@@ -639,6 +640,38 @@ function decideFate(p, lx) {
   return { hold: false, phase: 'travel', frac: rand(0.15, 1.0), chance };
 }
 
+function serializePrizes(list) {
+  return (list || []).map(p => ({
+    id: p.id,
+    x: Math.round(p.x * 10) / 10,
+    y: Math.round(p.y * 10) / 10,
+    kind: p.kind,
+    r: p.r,
+    flip: !!p.flip
+  }));
+}
+function deserializePrizes(data) {
+  return (data || []).map(p => ({
+    id: p.id || nextId++,
+    x: p.x,
+    y: p.y,
+    vx: 0,
+    vy: 0,
+    kind: p.kind,
+    r: p.r || (KINDS[p.kind] ? KINDS[p.kind].r : 8) || 8,
+    held: false,
+    carried: false,
+    dropped: false,
+    pushed: false,
+    noArm: 0,
+    flip: !!p.flip
+  }));
+}
+function saveCurrentMachine() {
+  save.machines = save.machines || {};
+  if (save.theme) save.machines[save.theme] = serializePrizes(prizes);
+}
+
 function dropHeld() {
   const p = claw.held; if (!p) return;
   p.held = false; p.dropped = true; p.noArm = 0.35;
@@ -651,7 +684,7 @@ function dropHeld() {
 
 function endRound() {
   save.buffs = {};
-    if (round.collected === 0) {
+  if (round.collected === 0) {
     save.streak++;
     if (round.guaranteed && !round.grabbed) say(pick(LINES.pityMiss));
     else if (round.nearMiss) say(pick(LINES.near));
@@ -659,6 +692,7 @@ function endRound() {
     else if (!round.grabbed) say(pick(LINES.empty));
     else say(pick(LINES.fail));
   } else save.streak = 0;
+  saveCurrentMachine();
   persist();
   if (prizes.length + spawnQueue.length < 35) {
     say(pick(LINES.refill));
@@ -671,7 +705,7 @@ function endRound() {
 
 function collect(p) {
   prizes.splice(prizes.indexOf(p), 1);
-  if (!booted) return; // 開場預先模擬時掉進洞的不算
+  if (!booted || mode === 'idle' || !round) return; // 開場預先模擬、閒置或非遊戲狀態下掉進洞的一律不計獎
   const k = KINDS[p.kind];
   save.wins++; save.coll[k.id] = (save.coll[k.id] || 0) + 1;
   if (round) { round.collected++; if (round.guaranteed) save.armed = false; }
@@ -692,6 +726,7 @@ function collect(p) {
   toast(`獲得 ${k.name}（${RARITY[k.rar].name}）！`);
   popups.push({ text: `GET! ${k.name}`, x: 92, y: 236, life: 1.8, col: RARITY[k.rar].color });
   for (let i = 0; i < 40; i++) particles.push({ x: rand(14, 54), y: 450, vx: rand(-60, 90), vy: rand(-220, -90), life: rand(.8, 1.6), col: pick(['#ff5fa2', '#ffd23f', '#3ff0ff', '#5dff7a', '#c08bff']) });
+  saveCurrentMachine();
   persist(); updateUI();
 }
 
@@ -861,7 +896,10 @@ function step(dt) {
   for (const p of prizes) {
     if (p.held || p.noArm > 0) continue;
     if (mode === 'close' && round && p === round.target) continue;
-    for (const [a, b, r] of segs) segPush(p, a.x, a.y, b.x, b.y, r, claw.vx * 0.6, claw.vy * 0.6);
+    for (const [a, b, r] of segs) {
+      const hit = segPush(p, a.x, a.y, b.x, b.y, r, claw.vx * 0.6, claw.vy * 0.6);
+      if (hit && (claw.vx !== 0 || claw.vy !== 0)) p.pushed = true;
+    }
   }
 
   /* 娃娃互撞 */
@@ -904,7 +942,8 @@ function step(dt) {
   for (let i = prizes.length - 1; i >= 0; i--) {
     const p = prizes[i];
     if (p.held) continue;
-    const minX = booted ? GLASS_L + (p.r || 8) : BARRIER_X + (p.r || 8) + 2;
+    const canEnterChute = booted && mode !== 'idle' && (p.carried || p.dropped || p.pushed);
+    const minX = canEnterChute ? GLASS_L + (p.r || 8) : BARRIER_X + (p.r || 8) + 1;
     if (p.x < minX) { p.x = minX; p.vx = Math.abs(p.vx) * 0.3; }
     if (p.x > GLASS_R - (p.r || 8)) { p.x = GLASS_R - (p.r || 8); p.vx = -Math.abs(p.vx) * 0.3; }
     if (p.y < GLASS_T + (p.r || 8)) { p.y = GLASS_T + (p.r || 8); p.vy = Math.abs(p.vy) * 0.2; }
@@ -1388,38 +1427,48 @@ function refillMachine(themeId, isManualReset = false) {
   prizes = [];
   claw.held = null;
 
-  // 95 隻娃娃三層分層配置：
+  // 95 隻娃娃三層分層配置（生成高度嚴格限制於壓克力擋板頂部之下，避免物理翻越）：
   // 底部（20隻）：傳說 / 重量級大娃娃 (r=16~17)
   for (let i = 0; i < 20; i++) {
     const id = pick(theme.bottom);
     const kIdx = KINDS.findIndex(k => k.id === id);
-    const x = 78 + (i % 6) * 26 + rand(-4, 4);
-    const y = FLOOR - 70 + Math.floor(i / 6) * 16 + rand(-3, 3);
+    const x = 82 + (i % 6) * 25 + rand(-3, 3);
+    const y = FLOOR - 65 + Math.floor(i / 6) * 15 + rand(-2, 2);
     addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
   // 中部（35隻）：特殊功能中型娃娃 (r=11~12)
   for (let i = 0; i < 35; i++) {
     const id = pick(theme.mid);
     const kIdx = KINDS.findIndex(k => k.id === id);
-    const x = 76 + (i % 8) * 20 + rand(-4, 4);
-    const y = FLOOR - 145 + Math.floor(i / 8) * 18 + rand(-3, 3);
+    const x = 80 + (i % 8) * 19 + rand(-3, 3);
+    const y = FLOOR - 130 + Math.floor(i / 8) * 16 + rand(-2, 2);
     addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
   // 頂部（40隻）：標準初階小娃娃 (r=8)
   for (let i = 0; i < 40; i++) {
     const id = pick(theme.top);
     const kIdx = KINDS.findIndex(k => k.id === id);
-    const x = 75 + (i % 8) * 20 + rand(-3, 3);
-    const y = FLOOR - 235 + Math.floor(i / 8) * 18 + rand(-3, 3);
+    const x = 78 + (i % 8) * 19 + rand(-2, 2);
+    const y = FLOOR - 190 + Math.floor(i / 8) * 14 + rand(-2, 2);
     addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
 
   const prevBooted = booted;
   booted = false;
   for (let i = 0; i < 600; i++) step(STEP);
-  for (const p of prizes) { p.vx = 0; p.vy = 0; }
+
+  // 沉降完畢後安全清理與邊界校正：保證無任何娃娃落入洞口或卡在頂部邊緣
+  prizes = prizes.filter(p => p.x >= BARRIER_X + 4 && p.y >= GLASS_T && p.y <= FLOOR);
+  for (const p of prizes) {
+    p.vx = 0; p.vy = 0;
+    if (p.x < BARRIER_X + (p.r || 8) + 2) p.x = BARRIER_X + (p.r || 8) + 2;
+  }
   booted = prevBooted;
   particles = [];
+
+  // 保存當前機台狀態至存檔
+  save.machines = save.machines || {};
+  save.machines[save.theme] = serializePrizes(prizes);
 
   if (isManualReset) {
     save.lastRefill = Date.now();
@@ -1432,13 +1481,35 @@ function refillMachine(themeId, isManualReset = false) {
 }
 
 function changeTheme(themeId) {
-  if (mode !== 'idle') return;
+  if (mode !== 'idle') {
+    const sel = $('#themeSelect');
+    if (sel) sel.value = save.theme;
+    return;
+  }
+  if (themeId === save.theme && prizes.length > 0) return;
+
+  // 1. 保存離開前當前機台的娃娃現狀（抓走的娃娃不會因切換而刷新或復活）
+  save.machines = save.machines || {};
+  if (save.theme && prizes.length > 0) {
+    save.machines[save.theme] = serializePrizes(prizes);
+  }
+
+  // 2. 切換主題記錄
   save.theme = themeId;
   save.visitedThemes = save.visitedThemes || {};
   save.visitedThemes[themeId] = true;
   if (Object.keys(save.visitedThemes).length >= 4) unlock('theme_tour');
   persist();
-  refillMachine(themeId, false);
+
+  // 3. 載入目標機台：已有存檔直接恢復現況，嚴禁自動重整卡 bug；未曾生成過才進行首次初始化生成
+  claw.held = null;
+  particles = [];
+  if (save.machines[themeId] && save.machines[themeId].length > 0) {
+    prizes = deserializePrizes(save.machines[themeId]);
+  } else {
+    refillMachine(themeId, false);
+  }
+
   const theme = THEMES[themeId] || THEMES.animal;
   toast(`🎰 已切換至【${theme.name}】！`);
   say(pick(LINES.theme));
@@ -1463,7 +1534,12 @@ function onRefillClick() {
 $('#btnRefill')?.addEventListener('click', onRefillClick);
 
 /* ============ 啟動 ============ */
-refillMachine(save.theme || 'animal');
+save.machines = save.machines || {};
+if (save.machines[save.theme] && save.machines[save.theme].length > 0) {
+  prizes = deserializePrizes(save.machines[save.theme]);
+} else {
+  refillMachine(save.theme || 'animal', false);
+}
 particles = []; mode = 'idle'; modeT = 0; booted = true;
 claw.px = clawGeom().hx; claw.py = clawGeom().hy;
 drawBoss(false); updateUI();

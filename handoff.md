@@ -47,12 +47,14 @@
   $$a_y = \begin{cases} -g \times 0.35 & (y > Y_{\text{target}}) \\ +g \times 0.25 & (y \le Y_{\text{target}}) \end{cases}$$
 - 配合垂直阻尼 $v_y \times (1 - 1.5 \Delta t)$ 與硬天花板保護（$y \ge 185$），呈現自然輕柔漂浮，且夾爪必定能觸及並抓取。
 
-### 2.4 擋板防溢出與物理重整保護
-壓克力擋板頂部高度為 $Y = 217$（加高至 $205\text{px}$，完整阻隔高達 95 隻的飽滿娃娃堆峰頂）。
-為防止 95 隻娃娃在重整與開場預先落定時自發滾入出貨洞口：
-1. 擋板頂部配置雙向段推擠幾何：垂直擋板線段 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X, FLOOR+30)` 加上水平防翻倒鉤 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X+6, BARRIER_TOP)`。
-2. 氣球動態邊界防護：未被夾取且未出貨的漂浮氣球限制於 $X \ge \text{BARRIER\_X} + r$，避免浮空橫移飄越擋板上方空域；當被夾爪成功運送並釋放至洞口時，解除浮力並施加重力正常掉入出貨口判定。
-3. 重整 (`refillMachine`) 執行期間將 `booted = false`，並對 $X < \text{BARRIER\_X}$ 區域施加暫時邊界鎖定，待 600 步物理沉降完畢且速度歸零後，才將 `booted = true`，確保開場與重整 0 漏球。
+### 2.4 擋板防溢出與多機台持久化防洗機制 (Anti-Exploit & Machine Persistence)
+壓克力擋板頂部高度為 $Y = 207$（加高至 $215\text{px}$，完整阻隔高達 95 隻的飽滿娃娃堆峰頂）。
+為防止 95 隻娃娃在重整與切換機台時自發滾入出貨洞口，並杜絕切換主題卡 bug 無限重整洗娃娃：
+1. **多機台獨立狀態持久化 (`save.machines[themeId]`)**：各主題機台獨立記錄場上娃娃座標與圖鑑，切換主題時只載入既有殘局，絕不重新生成 95 隻新娃娃；唯有透過「重整機台」按鈕並消耗 3 分鐘全局冷卻時才允許補滿。
+2. **閒置出貨絕對防禦**：`collect(p)` 嚴格防護 `if (!booted || mode === 'idle' || !round) return;`，在非遊戲操作狀態下任何娃娃入洞均不觸發中獎與成就，徹底消除切換地圖贈獎 bug。
+3. **擋板頂部雙向段推擠幾何**：垂直擋板線段 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X, FLOOR+30)` 加上水平防翻倒鉤 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X+6, BARRIER_TOP)`。
+4. **氣球動態邊界防護**：未被夾取且未出貨的漂浮氣球限制於 $X \ge \text{BARRIER\_X} + r$，避免浮空橫移飄越擋板上方空域；當被夾爪成功運送並釋放至洞口時，解除浮力並施加重力正常掉入出貨口判定。
+5. **重整物理沉降過濾**：重整 (`refillMachine`) 生成時將娃娃高度控制於 $Y \ge FLOOR - 190$（擋板頂部 $Y = 207$ 之下），執行 600 步物理沉降並進行邊界過濾，確保開場與重整 0 漏球。
 
 ### 2.5 打擊感與視覺反饋 (Juiciness & Audio Polish)
 1. **螢幕微震 (Screen Shake)**：炸彈引爆時觸發 `screenShake = 6`，在 `render()` 繪圖循環中對畫布上下文應用隨機像素偏移 `ctx.translate(rand(-sx, sx), rand(-sy, sy))`，配合線性阻尼衰減，創造強烈打擊反饋。
