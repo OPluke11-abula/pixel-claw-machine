@@ -208,7 +208,7 @@ git commit -m "feat(2.5d): render neo-arcade cabinet housing with marquee bulbs 
 - Consumes: `prizes` 娃娃列表
 - Produces: 8 種特製娃娃立體渲染（小熊、兔兔、小雞、喵喵、青蛙、神秘寶箱、彩虹金幣福袋、金色招財貓王），具備立體球型高光、厚度與像素五官。
 
-- [ ] **Step 1: 編寫娃娃種類完整度測試腳本**
+- [x] **Step 1: 編寫娃娃種類完整度測試腳本**
 
 ```javascript
 // scratch/test_25d_dolls.js
@@ -236,10 +236,10 @@ for (const id of expectedIds) {
 console.log('✅ 8 2.5D Doll Types Complete!');
 ```
 
-- [ ] **Step 2: 執行測試確認初始狀態失敗（缺 `money_bag`）**
-- [ ] **Step 3: 於 `DOLL_TYPES` 中加入 `money_bag`（彩虹金幣福袋）並實作 8 種娃娃立體像素渲染**
-- [ ] **Step 4: 執行測試驗證通過**
-- [ ] **Step 5: 提交 Commit**
+- [x] **Step 2: 執行測試確認初始狀態失敗（缺 `money_bag`）**
+- [x] **Step 3: 於 `DOLL_TYPES` 中加入 `money_bag`（彩虹金幣福袋）並實作 8 種娃娃立體像素渲染**
+- [x] **Step 4: 執行測試驗證通過**
+- [x] **Step 5: 提交 Commit**
 
 ```bash
 git add prototype_25d.html scratch/test_25d_dolls.js
