@@ -224,7 +224,7 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const W = 256, H = 480;
 const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 438;
 const FLOOR = 422;                 // 娃娃堆放的地板
-const BARRIER_X = 58, BARRIER_TOP = FLOOR - 105; // 洞口前的壓克力擋板（加高至 105px 支撐豐富娃娃堆）
+const BARRIER_X = 58, BARRIER_TOP = FLOOR - 205; // 洞口前的壓克力擋板（加高至 205px 完整保護 95 隻娃娃山堆，避免頂層娃娃滾落出銃）
 const RAIL_Y = 34;
 const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
@@ -838,12 +838,13 @@ function step(dt) {
   /* 娃娃積分 */
   for (const p of prizes) {
     if (p.held) continue;
-    if (KINDS[p.kind].balloon) {
+    if (KINDS[p.kind].balloon && !p.carried && p.x >= BARRIER_X) {
       const targetY = 220;
       const buoy = p.y > targetY ? -GRAV * 0.35 : GRAV * 0.25;
       p.vy += buoy * dt;
       p.vy *= (1 - 1.5 * dt);
       if (p.y < 185) { p.y = 185; p.vy = Math.max(0, p.vy); }
+      if (p.x < BARRIER_X + (p.r || 8)) { p.x = BARRIER_X + (p.r || 8); p.vx = Math.abs(p.vx) * 0.5; }
     } else {
       p.vy += GRAV * dt;
       p.vy *= (1 - 0.1 * dt);

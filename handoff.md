@@ -48,10 +48,11 @@
 - 配合垂直阻尼 $v_y \times (1 - 1.5 \Delta t)$ 與硬天花板保護（$y \ge 185$），呈現自然輕柔漂浮，且夾爪必定能觸及並抓取。
 
 ### 2.4 擋板防溢出與物理重整保護
-壓克力擋板頂部高度為 $Y = 317$（高 $105\text{px}$）。
+壓克力擋板頂部高度為 $Y = 217$（加高至 $205\text{px}$，完整阻隔高達 95 隻的飽滿娃娃堆峰頂）。
 為防止 95 隻娃娃在重整與開場預先落定時自發滾入出貨洞口：
 1. 擋板頂部配置雙向段推擠幾何：垂直擋板線段 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X, FLOOR+30)` 加上水平防翻倒鉤 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X+6, BARRIER_TOP)`。
-2. 重整 (`refillMachine`) 執行期間將 `booted = false`，並對 $X < \text{BARRIER\_X}$ 區域施加暫時邊界鎖定，待 600 步物理沉降完畢且速度歸零後，才將 `booted = true`，確保開場與重整 0 漏球。
+2. 氣球動態邊界防護：未被夾取且未出貨的漂浮氣球限制於 $X \ge \text{BARRIER\_X} + r$，避免浮空橫移飄越擋板上方空域；當被夾爪成功運送並釋放至洞口時，解除浮力並施加重力正常掉入出貨口判定。
+3. 重整 (`refillMachine`) 執行期間將 `booted = false`，並對 $X < \text{BARRIER\_X}$ 區域施加暫時邊界鎖定，待 600 步物理沉降完畢且速度歸零後，才將 `booted = true`，確保開場與重整 0 漏球。
 
 ### 2.5 打擊感與視覺反饋 (Juiciness & Audio Polish)
 1. **螢幕微震 (Screen Shake)**：炸彈引爆時觸發 `screenShake = 6`，在 `render()` 繪圖循環中對畫布上下文應用隨機像素偏移 `ctx.translate(rand(-sx, sx), rand(-sy, sy))`，配合線性阻尼衰減，創造強烈打擊反饋。
