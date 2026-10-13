@@ -185,11 +185,11 @@ git commit -m "feat(2.5d): add height-adaptive shadow mapping and vertical optic
 - Consumes: Canvas 2D context，遊戲模式 `mode`，連擊狂熱狀態 `combo`
 - Produces: 沉浸式街機框體（頂部霓虹跑馬燈、壓克力雙向反射、發光投幣面板、立體出貨斗槽）。
 
-- [ ] **Step 1: 實作雙層頂部霓虹招牌與 12 顆高頻跑馬燈泡**
-- [ ] **Step 2: 實作立體壓克力四壁金屬合金角柱與斜向眩光反射層**
-- [ ] **Step 3: 實作底部金屬操作面板、發光投幣孔與立體出貨槽**
-- [ ] **Step 4: 使用 Playwright 進行實機截圖檢視視覺品質**
-- [ ] **Step 5: 提交 Commit**
+- [x] **Step 1: 實作雙層頂部霓虹招牌與 14 顆高頻跑馬燈泡**
+- [x] **Step 2: 實作立體壓克力四壁金屬合金角柱與斜向眩光反射層**
+- [x] **Step 3: 實作底部金屬操作面板、發光投幣孔與立體出貨槽**
+- [x] **Step 4: 使用 Playwright 進行實機截圖檢視視覺品質**
+- [x] **Step 5: 提交 Commit**
 
 ```bash
 git add prototype_25d.html
