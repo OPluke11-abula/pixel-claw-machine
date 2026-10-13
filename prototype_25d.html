@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PIXEL CLAW 2.5D 等角透視立體娃娃機</title>
+<style>
+  :root {
+    --bg: #0c0717;
+    --cabinet-top: #ff2a70;
+    --cabinet-body: #2b184f;
+    --cabinet-edge: #523091;
+    --accent: #ffd23f;
+    --cyan: #38b6ff;
+    --pink: #ff5fa2;
+    --green: #5dff7a;
+    --text: #f0e6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: monospace, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 8px;
+    touch-action: manipulation;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .title {
+    font-size: 19px;
+    color: var(--accent);
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 #3a1500, -1px -1px 0 #000;
+  }
+  .sub-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #231342;
+    color: var(--cyan);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 4px;
+    border: 1px solid #4a2985;
+  }
+  #game-box {
+    position: relative;
+    border: 3px solid #633bb3;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 12px rgba(99,59,179,0.3);
+    background: #080312;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .controls-panel {
+    margin-top: 8px;
+    width: 330px;
+    background: #1b1033;
+    border: 2px solid #482882;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    background: rgba(0,0,0,0.4);
+    padding: 5px 8px;
+    border-radius: 4px;
+    border: 1px solid #2e1a54;
+  }
+  .dpad-layout {
+    display: grid;
+    grid-template-columns: 54px 54px 54px;
+    grid-template-rows: 40px 40px;
+    gap: 5px;
+    justify-content: center;
+    margin: 4px auto;
+  }
+  .pbtn {
+    background: #3c206d;
+    color: #fff;
+    border: 2px solid #653bb3;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 #1e0d3b;
+    transition: transform 0.04s, background 0.04s;
+  }
+  .pbtn:active, .pbtn.active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 #1e0d3b;
+    background: var(--pink);
+    border-color: #ff85be;
+  }
+  .action-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-drop {
+    flex: 2;
+    background: #e82e65;
+    border-color: #ff6091;
+    color: #fff;
+    font-size: 15px;
+    padding: 10px;
+    box-shadow: 0 4px 0 #801233;
+  }
+  .btn-drop:active, .btn-drop.active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 #801233;
+    background: #ff477d;
+  }
+  .btn-speed {
+    flex: 1;
+    background: #255c99;
+    border-color: #3b82d6;
+    font-size: 12px;
+    box-shadow: 0 3px 0 #122d4d;
+  }
+  .btn-speed.on {
+    background: #f39c12;
+    border-color: #f1c40f;
+    box-shadow: 0 3px 0 #965b05;
+  }
+  .toast-box {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 6, 26, 0.95);
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+  }
+  .toast-box.show { opacity: 1; transform: translateX(-50%) translateY(3px); }
+  .guide-txt {
+    font-size: 11px;
+    color: #a48ecc;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .guide-txt b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">PIXEL CLAW 2.5D</div>
+  <div class="sub-badge">
+    <span>🕹️ 等角透視 4 向立體機台</span>
+    <span style="color:#ffd23f">● 雙軸深度瞄準</span>
+  </div>
+</div>
+
+<div id="game-box">
+  <canvas id="view" width="330" height="420"></canvas>
+  <div id="toast" class="toast-box">準備就緒！</div>
+</div>
+
+<div class="controls-panel">
+  <div class="info-bar">
+    <span>狀態: <b id="ui-mode" style="color:var(--green)">MOVE 瞄準</b></span>
+    <span>金幣: <b id="ui-coins" style="color:var(--accent)">100 🪙</b></span>
+    <span>收穫: <b id="ui-wins" style="color:var(--pink)">0 隻</b></span>
+    <button class="pbtn" id="btn-sound" style="padding:2px 8px;font-size:11px">🔊 音效</button>
+  </div>
+
+  <div class="dpad-layout">
+    <div></div>
+    <button class="pbtn" id="btn-up">▲ 深入</button>
+    <div></div>
+    <button class="pbtn" id="btn-left">◀ 往左</button>
+    <button class="pbtn" id="btn-down">▼ 靠前</button>
+    <button class="pbtn" id="btn-right">▶ 往右</button>
+  </div>
+
+  <div class="action-row">
+    <button class="pbtn btn-drop" id="btn-drop">🎯 下爪抓取 (SPACE)</button>
+    <button class="pbtn btn-speed" id="btn-speed">⏩ 2X倍速</button>
+  </div>
+
+  <div class="guide-txt">
+    鍵盤：<b>W / S</b> 深度(前後)｜<b>A / D</b> 水平(左右)｜<b>SPACE</b> 下爪<br>
+    地面<b>「金色十字光圈與紅色雷射虛線」</b>為爪子即時落點！
+  </div>
+</div>
+
+<script>
+(function() {
+  const cvs = document.getElementById('view');
+  const ctx = cvs.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const W = cvs.width, H = cvs.height;
+  const ORIGIN_X = W / 2;
+  const ORIGIN_Y = 270;
+
+  // 8-Bit Web Audio 合成器
+  const Sfx = {
+    ctx: null,
+    muted: false,
+    init() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    },
+    tone(freq, dur, { to, type = 'square', vol = 0.25, when = 0 } = {}) {
+      if (this.muted || !this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      const t = this.ctx.currentTime + when;
+      osc.frequency.setValueAtTime(freq, t);
+      if (to) osc.frequency.linearRampToValueAtTime(to, t + dur);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.05);
+    },
+    click() { this.init(); this.tone(900, 0.03, { vol: 0.15 }); },
+    drop() { this.init(); this.tone(480, 0.2, { to: 160, vol: 0.3 }); },
+    grab() { this.init(); this.tone(200, 0.15, { to: 320, vol: 0.35 }); },
+    win() {
+      this.init();
+      this.tone(523, 0.08, { vol: 0.3 });
+      this.tone(659, 0.08, { when: 0.08, vol: 0.3 });
+      this.tone(784, 0.18, { when: 0.16, vol: 0.35 });
+    },
+    slip() { this.init(); this.tone(360, 0.18, { to: 140, type: 'sawtooth', vol: 0.25 }); }
+  };
+
+  // 2.5D 經典 2:1 等角投影矩陣
+  // 3D 空間定義：
+  // X: 左右軸 (-76 ~ +76)
+  // Z: 前後深淺軸 (-56 深入機台 ~ +56 靠近正面)
+  // Y: 垂直高度 (0 為機台底板，190 為天車軌道頂部)
+  function project(x, y, z) {
+    return {
+      sx: Math.round(ORIGIN_X + (x - z) * 1.08),
+      sy: Math.round(ORIGIN_Y + (x + z) * 0.54 - y)
+    };
+  }
+
+  // 機台邊界空間常數
+  const BOX_X = 74;      // 機台半寬
+  const BOX_Z = 54;      // 機台半深
+  const BOX_TOP_Y = 185; // 天車軌道高
+  const CHUTE_X = -46;   // 出貨口邊界 (前左角落)
+  const CHUTE_Z = 24;    // 出貨口前緣
+
+  // 娃娃種類 (具備 2.5D 立體五官與特徵)
+  const DOLL_TYPES = [
+    { id: 'bear', name: '小熊', col: '#c4783f', r: 7.5, ear: true },
+    { id: 'bunny', name: '兔兔', col: '#ffffff', r: 7.2, ear: true, longEar: true },
+    { id: 'chick', name: '小雞', col: '#ffd23f', r: 6.8, beak: true },
+    { id: 'cat', name: '喵喵', col: '#ff9254', r: 7.2, ear: true },
+    { id: 'frog', name: '青蛙', col: '#52d964', r: 7.5, frogEyes: true },
+    { id: 'chest', name: '神秘寶箱', col: '#8a3a14', r: 8.8, isChest: true },
+    { id: 'king', name: '金色招財貓', col: '#ffc800', r: 11.5, isBoss: true }
+  ];
+
+  let prizes = [];
+  let nextId = 1;
+
+  function initPrizes() {
+    prizes = [];
+    // 生成 50 隻娃娃三層立體堆疊於機台中央偏後區
+    for (let i = 0; i < 50; i++) {
+      let type;
+      if (i === 15 || i === 32) type = DOLL_TYPES[5]; // 神秘寶箱
+      else if (i === 0) type = DOLL_TYPES[6];         // 金色招財貓
+      else type = DOLL_TYPES[i % 5];
+
+      // 避免生成在出貨洞口正上方
+      let px, pz;
+      do {
+        px = (i % 8) * 16 - 36 + (Math.random() - 0.5) * 8;
+        pz = Math.floor(i / 8) * 14 - 38 + (Math.random() - 0.5) * 8;
+      } while (px < CHUTE_X + 6 && pz > CHUTE_Z - 6);
+
+      const py = Math.floor(i / 16) * 13 + type.r;
+      prizes.push({
+        id: nextId++,
+        type,
+        x: px,
+        z: pz,
+        y: py,
+        vx: 0, vy: 0, vz: 0,
+        r: type.r,
+        held: false,
+        dropping: false
+      });
+    }
+  }
+  initPrizes();
+
+  // 天車與爪子狀態
+  const HOME_X = -56, HOME_Z = 38; // 出貨口正上方懸停原點
+  const claw = {
+    x: HOME_X,
+    z: HOME_Z,
+    y: BOX_TOP_Y,
+    open: 1.0,     // 1.0 = 全開, 0.0 = 緊閉
+    heldList: []
+  };
+
+  let mode = 'move'; // move, down, grab, up, back, release
+  let modeT = 0;
+  let coins = 120;
+  let wins = 0;
+  let timeScale = 1;
+  let particles = [];
+
+  const input = { left: false, right: false, up: false, down: false };
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el.timer);
+    el.timer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // 物理步進
+  function update(dt) {
+    dt *= timeScale;
+    modeT += dt;
+
+    if (mode === 'move') {
+      const spd = 70;
+      if (input.left) claw.x = Math.max(-BOX_X + 12, claw.x - spd * dt);
+      if (input.right) claw.x = Math.min(BOX_X - 12, claw.x + spd * dt);
+      if (input.up) claw.z = Math.max(-BOX_Z + 12, claw.z - spd * dt);
+      if (input.down) claw.z = Math.min(BOX_Z - 12, claw.z + spd * dt);
+    } else if (mode === 'down') {
+      claw.y -= 85 * dt;
+      // 碰撞檢測：爪尖接觸到娃娃或地面
+      let hit = claw.y <= 16;
+      for (const p of prizes) {
+        const dx = p.x - claw.x, dz = p.z - claw.z, dy = p.y - (claw.y - 12);
+        const dist = Math.hypot(dx, dz);
+        if (dist < p.r + 9 && Math.abs(dy) < 11) {
+          hit = true;
+          break;
+        }
+      }
+      if (hit) {
+        mode = 'grab';
+        modeT = 0;
+        Sfx.grab();
+      }
+    } else if (mode === 'grab') {
+      claw.open = Math.max(0, claw.open - dt / 0.45);
+      if (claw.open <= 0.15 && claw.heldList.length === 0) {
+        // 抓取半徑判定 (3D 空間圓球抓取)
+        for (const p of prizes) {
+          if (p.held) continue;
+          const dx = p.x - claw.x, dz = p.z - claw.z, dy = p.y - (claw.y - 10);
+          const dist3D = Math.hypot(dx, dz, dy);
+          if (dist3D < p.r + 11) {
+            p.held = true;
+            p.localX = dx;
+            p.localZ = dz;
+            p.localY = dy;
+            claw.heldList.push(p);
+            if (claw.heldList.length >= 2) break; // 最多雙抓
+          }
+        }
+        if (claw.heldList.length > 0) {
+          showToast(`🎯 夾中了！【${claw.heldList.map(p => p.type.name).join(' + ')}】`);
+        }
+      }
+      if (modeT > 0.65) {
+        mode = 'up';
+        modeT = 0;
+      }
+    } else if (mode === 'up') {
+      claw.y = Math.min(BOX_TOP_Y, claw.y + 80 * dt);
+      if (claw.y >= BOX_TOP_Y) {
+        mode = 'back';
+        modeT = 0;
+      }
+    } else if (mode === 'back') {
+      const spd = 65 * dt;
+      const dx = HOME_X - claw.x, dz = HOME_Z - claw.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 2.5) {
+        claw.x = HOME_X;
+        claw.z = HOME_Z;
+        mode = 'release';
+        modeT = 0;
+      } else {
+        claw.x += (dx / dist) * spd;
+        claw.z += (dz / dist) * spd;
+      }
+    } else if (mode === 'release') {
+      claw.open = Math.min(1.0, claw.open + dt / 0.35);
+      if (claw.open >= 0.65 && claw.heldList.length > 0) {
+        for (const p of claw.heldList) {
+          p.held = false;
+          p.dropping = true;
+          p.vx = (Math.random() - 0.5) * 12;
+          p.vz = (Math.random() - 0.5) * 12;
+          p.vy = -15;
+        }
+        claw.heldList = [];
+      }
+      if (modeT > 1.1) {
+        mode = 'move';
+        modeT = 0;
+      }
+    }
+
+    // 更新娃娃物理位置與出貨判定
+    for (let i = prizes.length - 1; i >= 0; i--) {
+      const p = prizes[i];
+      if (p.held) {
+        p.x = claw.x + (p.localX || 0);
+        p.z = claw.z + (p.localZ || 0);
+        p.y = claw.y - 12 + (p.localY || 0);
+      } else if (p.dropping) {
+        p.vy -= 190 * dt;
+        p.x += p.vx * dt;
+        p.z += p.vz * dt;
+        p.y += p.vy * dt;
+
+        // 判定落入出貨口
+        if (p.x <= CHUTE_X && p.z >= CHUTE_Z && p.y < -15) {
+          wins++;
+          const gain = p.type.isBoss ? 250 : (p.type.isChest ? 80 : 25);
+          coins += gain;
+          Sfx.win();
+          showToast(`🎉 出貨成功！獲得【${p.type.name}】+${gain}🪙！`);
+          // 出貨煙火粒子
+          for (let k = 0; k < 25; k++) {
+            particles.push({
+              sx: ORIGIN_X - 60 + (Math.random() - 0.5) * 20,
+              sy: ORIGIN_Y + 30 + (Math.random() - 0.5) * 20,
+              vx: (Math.random() - 0.5) * 80,
+              vy: -Math.random() * 120 - 40,
+              life: 0.8,
+              col: ['#ffd23f', '#ff5fa2', '#38b6ff', '#5dff7a'][Math.floor(Math.random() * 4)]
+            });
+          }
+          prizes.splice(i, 1);
+          continue;
+        }
+
+        if (p.y <= p.r) {
+          p.y = p.r;
+          p.vy = 0;
+          p.dropping = false;
+        }
+      }
+    }
+
+    // 粒子更新
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pt = particles[i];
+      pt.life -= dt;
+      pt.sx += pt.vx * dt;
+      pt.sy += pt.vy * dt;
+      pt.vy += 220 * dt;
+      if (pt.life <= 0) particles.splice(i, 1);
+    }
+
+    // UI 刷新
+    document.getElementById('ui-mode').textContent = mode.toUpperCase();
+    document.getElementById('ui-coins').textContent = coins + ' 🪙';
+    document.getElementById('ui-wins').textContent = wins + ' 隻';
+  }
+
+  // ================= 繪圖渲染核心 (2.5D Isometric Painter) =================
+  function drawLine(p1, p2, col, w = 1) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(p1.sx, p1.sy);
+    ctx.lineTo(p2.sx, p2.sy);
+    ctx.stroke();
+  }
+
+  function drawPoly(pts, fill, stroke, strokeW = 1) {
+    if (pts.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].sx, pts[0].sy);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = strokeW; ctx.stroke(); }
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 1. 機台外殼頂部招牌 (Top Marquee)
+    ctx.fillStyle = '#ff2a70';
+    ctx.fillRect(18, 12, W - 36, 26);
+    ctx.fillStyle = '#1b0e36';
+    ctx.fillRect(20, 14, W - 40, 22);
+    ctx.fillStyle = '#ffd23f';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('★ SEGA UFO CATCHER 2.5D ★', W / 2, 29);
+
+    // 2. 機台地板基座與等角網格
+    const f0 = project(-BOX_X, 0, -BOX_Z);
+    const f1 = project(BOX_X, 0, -BOX_Z);
+    const f2 = project(BOX_X, 0, BOX_Z);
+    const f3 = project(-BOX_X, 0, BOX_Z);
+    drawPoly([f0, f1, f2, f3], '#2b1b4f', '#4e2d8a', 2);
+
+    // 等角地板棋盤輔助格線
+    for (let x = -BOX_X; x <= BOX_X; x += 22) {
+      drawLine(project(x, 0, -BOX_Z), project(x, 0, BOX_Z), 'rgba(255,255,255,0.05)');
+    }
+    for (let z = -BOX_Z; z <= BOX_Z; z += 22) {
+      drawLine(project(-BOX_X, 0, z), project(BOX_X, 0, z), 'rgba(255,255,255,0.05)');
+    }
+
+    // 3. 洞口與出貨壓克力檔板 (Chute hole & barrier)
+    const ch0 = project(-BOX_X, 0, CHUTE_Z);
+    const ch1 = project(CHUTE_X, 0, CHUTE_Z);
+    const ch2 = project(CHUTE_X, 0, BOX_Z);
+    const ch3 = project(-BOX_X, 0, BOX_Z);
+    drawPoly([ch0, ch1, ch2, ch3], '#080312', '#ffd23f', 2);
+
+    const chCenter = project((-BOX_X + CHUTE_X) / 2, 0, (CHUTE_Z + BOX_Z) / 2);
+    ctx.fillStyle = '#ffd23f';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('▼ 出口', chCenter.sx, chCenter.sy + 3);
+
+    // 出貨口透明壓克力圍欄
+    drawLine(project(CHUTE_X, 0, CHUTE_Z), project(CHUTE_X, 36, CHUTE_Z), 'rgba(120,230,255,0.8)', 2);
+    drawLine(project(CHUTE_X, 0, BOX_Z), project(CHUTE_X, 36, BOX_Z), 'rgba(120,230,255,0.8)', 2);
+    drawLine(project(-BOX_X, 0, CHUTE_Z), project(-BOX_X, 36, CHUTE_Z), 'rgba(120,230,255,0.8)', 2);
+
+    // 4. 後方立柱與壓克力壁面
+    const bL_top = project(-BOX_X, BOX_TOP_Y, -BOX_Z);
+    const bR_top = project(BOX_X, BOX_TOP_Y, -BOX_Z);
+    drawLine(f0, bL_top, '#523091', 3);
+    drawLine(f1, bR_top, '#523091', 3);
+    drawLine(bL_top, bR_top, '#784ec4', 2);
+
+    // 5. 深度排序渲染 (Depth Sorting: X + Z)
+    const drawList = [];
+
+    // 5.1 天車落點影子與十字光學瞄準圈 (Crosshair Floor Projection)
+    drawList.push({
+      depth: claw.x + claw.z - 3,
+      render: () => {
+        const sh = project(claw.x, 0, claw.z);
+        // 半透明地面投影圓斑
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(sh.sx, sh.sy, 16, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 金色瞄準十字線
+        ctx.strokeStyle = 'rgba(255, 210, 63, 0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sh.sx - 10, sh.sy); ctx.lineTo(sh.sx + 10, sh.sy);
+        ctx.moveTo(sh.sx, sh.sy - 5); ctx.lineTo(sh.sx, sh.sy + 5);
+        ctx.stroke();
+
+        // 垂直光學紅色虛線 (自天車垂直直射地面，消除深度視差)
+        const clPos = project(claw.x, claw.y, claw.z);
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255, 60, 60, 0.45)';
+        ctx.beginPath();
+        ctx.moveTo(clPos.sx, clPos.sy);
+        ctx.lineTo(sh.sx, sh.sy);
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    // 5.2 娃娃繪製 (3D Isometric Dolls)
+    for (const p of prizes) {
+      drawList.push({
+        depth: p.x + p.z,
+        render: () => {
+          const sp = project(p.x, p.y, p.z);
+          const r = p.r * 1.05;
+
+          // 陰影
+          const sh = project(p.x, 0, p.z);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.beginPath();
+          ctx.ellipse(sh.sx, sh.sy, r * 0.9, r * 0.45, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 娃娃主體
+          ctx.fillStyle = p.type.col;
+          ctx.beginPath();
+          ctx.arc(sp.sx, sp.sy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#150a2b';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // 3D 高光球體弧光
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.beginPath();
+          ctx.arc(sp.sx - r * 0.3, sp.sy - r * 0.3, r * 0.35, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 五官特徵
+          if (p.type.isChest) {
+            // 神秘寶箱金屬邊框與發光鎖扣
+            ctx.fillStyle = '#ffd23f';
+            ctx.fillRect(sp.sx - 3, sp.sy - 3, 6, 6);
+            ctx.fillStyle = '#00e5ff';
+            ctx.fillRect(sp.sx - 1, sp.sy - 1, 2, 2);
+          } else if (p.type.isBoss) {
+            // 金色貓王紅項圈與大耳朵
+            ctx.fillStyle = '#e82e65';
+            ctx.fillRect(sp.sx - 4, sp.sy + 4, 8, 2);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(sp.sx - 3, sp.sy - 2, 2, 2);
+            ctx.fillRect(sp.sx + 1, sp.sy - 2, 2, 2);
+          } else if (p.type.ear) {
+            // 貓耳/熊耳/兔耳
+            ctx.fillStyle = p.type.col;
+            ctx.beginPath();
+            ctx.arc(sp.sx - 4, sp.sy - (p.type.longEar ? 7 : 4), p.type.longEar ? 3 : 2, 0, Math.PI * 2);
+            ctx.arc(sp.sx + 4, sp.sy - (p.type.longEar ? 7 : 4), p.type.longEar ? 3 : 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            // 眼睛
+            ctx.fillStyle = '#150a2b';
+            ctx.fillRect(sp.sx - 3, sp.sy - 1, 2, 2);
+            ctx.fillRect(sp.sx + 1, sp.sy - 1, 2, 2);
+          } else if (p.type.beak) {
+            // 小雞嘴巴
+            ctx.fillStyle = '#150a2b';
+            ctx.fillRect(sp.sx - 3, sp.sy - 1, 1, 2);
+            ctx.fillRect(sp.sx + 2, sp.sy - 1, 1, 2);
+            ctx.fillStyle = '#ff7b00';
+            ctx.fillRect(sp.sx - 1, sp.sy, 2, 2);
+          } else {
+            // 普通雙眼
+            ctx.fillStyle = '#150a2b';
+            ctx.fillRect(sp.sx - 3, sp.sy - 1, 2, 2);
+            ctx.fillRect(sp.sx + 1, sp.sy - 1, 2, 2);
+          }
+        }
+      });
+    }
+
+    // 5.3 爪子實體繪製 (2.5D Claw Assembly)
+    drawList.push({
+      depth: claw.x + claw.z,
+      render: () => {
+        const topPos = project(claw.x, BOX_TOP_Y, claw.z);
+        const headPos = project(claw.x, claw.y, claw.z);
+
+        // 天車頂部軌道鋼索
+        drawLine(topPos, headPos, '#cfd6e6', 2);
+
+        // 天車頂部驅動馬達
+        ctx.fillStyle = '#ffd23f';
+        ctx.fillRect(topPos.sx - 9, topPos.sy - 7, 18, 8);
+        ctx.fillStyle = '#150a2b';
+        ctx.strokeRect(topPos.sx - 9, topPos.sy - 7, 18, 8);
+
+        // 爪頭金屬基座
+        ctx.fillStyle = '#e82e65';
+        ctx.fillRect(headPos.sx - 8, headPos.sy - 6, 16, 9);
+        ctx.fillStyle = '#150a2b';
+        ctx.strokeRect(headPos.sx - 8, headPos.sy - 6, 16, 9);
+        ctx.fillStyle = '#ffd23f';
+        ctx.fillRect(headPos.sx - 2, headPos.sy - 3, 4, 3);
+
+        // 3 支 2.5D 立體爪臂 (依據開合度展開)
+        const span = 9 + claw.open * 13;
+        const armLeft = project(claw.x - span, claw.y - 15, claw.z + span * 0.5);
+        const armRight = project(claw.x + span, claw.y - 15, claw.z - span * 0.5);
+        const armBack = project(claw.x, claw.y - 15, claw.z - span);
+
+        for (const tip of [armLeft, armRight, armBack]) {
+          drawLine(headPos, tip, '#150a2b', 4);
+          drawLine(headPos, tip, '#cfd6e6', 2);
+          // 爪尖高碳鋼防滑指
+          ctx.fillStyle = '#ffd23f';
+          ctx.fillRect(tip.sx - 2, tip.sy - 2, 4, 4);
+        }
+      }
+    });
+
+    // 排序繪製
+    drawList.sort((a, b) => a.depth - b.depth);
+    for (const item of drawList) item.render();
+
+    // 6. 前方透明壓克力機身柱與玻璃反光 (Front Acrylic Reflections)
+    const fL_top = project(-BOX_X, BOX_TOP_Y, BOX_Z);
+    const fR_top = project(BOX_X, BOX_TOP_Y, BOX_Z);
+    drawLine(f3, fL_top, 'rgba(120, 230, 255, 0.5)', 3);
+    drawLine(f2, fR_top, 'rgba(120, 230, 255, 0.5)', 3);
+    drawLine(fL_top, fR_top, 'rgba(120, 230, 255, 0.7)', 2);
+
+    // 玻璃斜向高光炫光
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 + 30, 60);
+    ctx.lineTo(W / 2 + 100, 280);
+    ctx.stroke();
+    ctx.restore();
+
+    // 7. 出貨慶祝粒子
+    for (const pt of particles) {
+      ctx.fillStyle = pt.col;
+      ctx.fillRect(Math.round(pt.sx), Math.round(pt.sy), 3, 3);
+    }
+  }
+
+  // 遊戲動畫循環
+  let lastTime = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ================= 操作監聽與綁定 =================
+  window.addEventListener('keydown', (e) => {
+    Sfx.init();
+    if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') input.left = true;
+    if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') input.right = true;
+    if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') input.up = true;
+    if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') input.down = true;
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      triggerDrop();
+    }
+    if (e.key === 'f' || e.key === 'F') toggleSpeed();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') input.left = false;
+    if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') input.right = false;
+    if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') input.up = false;
+    if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') input.down = false;
+  });
+
+  function bindBtn(id, key) {
+    const el = document.getElementById(id);
+    const on = (e) => { e.preventDefault(); Sfx.click(); input[key] = true; el.classList.add('active'); };
+    const off = (e) => { e.preventDefault(); input[key] = false; el.classList.remove('active'); };
+    el.addEventListener('pointerdown', on);
+    el.addEventListener('pointerup', off);
+    el.addEventListener('pointerleave', off);
+    el.addEventListener('pointercancel', off);
+  }
+
+  bindBtn('btn-up', 'up');
+  bindBtn('btn-down', 'down');
+  bindBtn('btn-left', 'left');
+  bindBtn('btn-right', 'right');
+
+  function triggerDrop() {
+    if (mode === 'move') {
+      mode = 'down';
+      modeT = 0;
+      Sfx.drop();
+      showToast('🚀 爪子下放中！');
+    }
+  }
+  document.getElementById('btn-drop').addEventListener('click', () => { Sfx.click(); triggerDrop(); });
+
+  function toggleSpeed() {
+    timeScale = timeScale === 1 ? 2 : 1;
+    const btn = document.getElementById('btn-speed');
+    btn.textContent = timeScale === 2 ? '⚡ 2X' : '⏩ 1X';
+    btn.classList.toggle('on', timeScale === 2);
+    Sfx.click();
+    showToast(timeScale === 2 ? '⚡ 已開啟 2 倍速！' : '▶ 切換為 1 倍速');
+  }
+  document.getElementById('btn-speed').addEventListener('click', toggleSpeed);
+
+  document.getElementById('btn-sound').addEventListener('click', () => {
+    Sfx.init();
+    Sfx.muted = !Sfx.muted;
+    document.getElementById('btn-sound').textContent = Sfx.muted ? '🔇 靜音' : '🔊 音效';
+    showToast(Sfx.muted ? '已靜音' : '音效已開啟');
+  });
+
+  // 對外測試介面
+  window.Prototype25D = {
+    get claw() { return claw; },
+    get prizes() { return prizes; },
+    get mode() { return mode; },
+    triggerDrop,
+    toggleSpeed
+  };
+
+})();
+</script>
+
+</body>
+</html>
