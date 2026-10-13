@@ -258,7 +258,7 @@ git commit -m "feat(2.5d): implement 8 isometric doll types with 3D sphere highl
 - Consumes: 使用者輸入、按鈕點擊
 - Produces: 投幣（10元/次）、累積保夾條、二段提前合爪（`earlyClose`）、娃娃櫃圖鑑一鍵出售、RPG 機台升級商店、台主阿財吐槽對話與 FEVER TIME 連擊。
 
-- [ ] **Step 1: 編寫完整遊戲循環測試腳本**
+- [x] **Step 1: 編寫完整遊戲循環測試腳本**
 
 ```javascript
 // scratch/test_25d_loop.js
@@ -306,10 +306,10 @@ if (P.combo < 2) throw new Error('Fever combo failed');
 console.log('✅ 2.5D Full Gameplay Loop Test Passed!');
 ```
 
-- [ ] **Step 2: 執行測試確認初始狀態失敗**
-- [ ] **Step 3: 實作投幣、保夾、二段合爪、圖鑑、商店與台主阿財對話**
-- [ ] **Step 4: 執行測試驗證通過**
-- [ ] **Step 5: 提交 Commit**
+- [x] **Step 2: 執行測試確認初始狀態失敗**
+- [x] **Step 3: 實作投幣、保夾、二段合爪、圖鑑、商店與台主阿財對話**
+- [x] **Step 4: 執行測試驗證通過**
+- [x] **Step 5: 提交 Commit**
 
 ```bash
 git add prototype_25d.html scratch/test_25d_loop.js
