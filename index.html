@@ -77,6 +77,26 @@ footer a{color:var(--cyan)}
 .ach-item.locked{opacity:.45}
 .danger{margin-top:16px;display:flex;justify-content:flex-end}
 .danger .pbtn{background:#ff6b6b}
+.modal-box::-webkit-scrollbar{width:8px}
+.modal-box::-webkit-scrollbar-track{background:#1c1236}
+.modal-box::-webkit-scrollbar-thumb{background:var(--yellow);box-shadow:inset 0 0 0 2px var(--dark)}
+.modal-box::-webkit-scrollbar-thumb:hover{background:#fff}
+.modal-box{animation:mpop .18s steps(3)}
+@keyframes mpop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.badge-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.badge-item{font-size:12px;background:#1c1236;padding:5px 8px;box-shadow:0 0 0 2px var(--dark);color:#cbbcf0;display:inline-flex;align-items:center;gap:4px;line-height:1.2}
+.badge-item.active{color:var(--yellow);box-shadow:0 0 0 2px var(--yellow);background:#331b54}
+.badge-item.buff{color:var(--cyan);box-shadow:0 0 0 2px var(--cyan);background:#1a2850}
+.badge-empty{font-size:12px;color:#8f80bb;line-height:1.6}
+.shop-sec-title{font-size:13px;color:var(--cyan);margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #3d2a6b;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.shop-sec-title:first-child{margin-top:4px}
+.machine-bar{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:512px;gap:8px;padding:0 2px}
+.theme-wrap{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--cyan)}
+.pselect{font-family:inherit;font-size:13px;color:var(--dark);background:var(--yellow);border:none;padding:5px 8px;box-shadow:inset -2px -2px 0 rgba(0,0,0,.25),inset 2px 2px 0 rgba(255,255,255,.45),0 0 0 2px var(--dark);cursor:pointer;outline:none}
+.speed-btn{font-size:13px;padding:5px 12px;background:#3d2a6b;color:var(--ink);transition:all .15s}
+.speed-btn.active{background:var(--green);color:var(--dark);box-shadow:0 0 8px rgba(93,255,122,.6),0 0 0 2px var(--dark);font-weight:bold}
+.refill-btn{width:100%;font-size:14px;padding:9px;background:#38b6ff;color:var(--dark);margin-top:2px}
+.refill-btn:disabled{opacity:.6;filter:grayscale(60%);cursor:not-allowed}
 #toasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:30;pointer-events:none;width:max-content;max-width:92vw}
 .toast{background:var(--yellow);color:var(--dark);padding:10px 16px;font-size:15px;box-shadow:0 0 0 3px var(--dark),6px 6px 0 rgba(0,0,0,.4);animation:tin .25s steps(3),tout .4s steps(3) 2.6s forwards}
 .toast.ach{background:var(--cyan)}
@@ -104,6 +124,18 @@ footer a{color:var(--cyan)}
 
 <main>
   <section class="machine">
+    <div class="machine-bar">
+      <div class="theme-wrap">
+        <label for="themeSelect">機台：</label>
+        <select id="themeSelect" class="pselect" aria-label="切換機台主題">
+          <option value="animal">🧸 動物樂園機</option>
+          <option value="cute">💖 可愛夢幻機</option>
+          <option value="mecha">⚙️ 鋼鐵機械機</option>
+          <option value="slime">🧪 奇幻軟泥機</option>
+        </select>
+      </div>
+      <button class="pbtn small speed-btn" id="btnSpeed" title="切換 2 倍速 (快捷鍵 F)">▶ 1X</button>
+    </div>
     <canvas id="game" width="256" height="480" aria-label="夾娃娃機遊戲畫面"></canvas>
     <div class="controls">
       <button class="pbtn" id="btnLeft" aria-label="向左">◀<kbd>←/A</kbd></button>
@@ -138,6 +170,15 @@ footer a{color:var(--cyan)}
       <div class="bar" id="pityBar"><i id="pityFill"></i></div>
       <div class="pity-note" id="pityNote">每投滿 300 元會觸發一次保夾。</div>
     </div>
+
+    <div class="card" id="cardUpgrades">
+      <h2>機台改裝與生效狀態</h2>
+      <div class="badge-grid" id="statusBadges">
+        <span class="badge-empty">尚未改裝機台 (可至商店升級)</span>
+      </div>
+    </div>
+
+    <button class="pbtn small refill-btn" id="btnRefill">🔄 重整機台 (3分冷卻)</button>
 
     <div class="row">
       <button class="pbtn small" id="btnDex">娃娃櫃</button>
@@ -183,16 +224,16 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const W = 256, H = 480;
 const GLASS_L = 10, GLASS_R = 246, GLASS_T = 22, GLASS_B = 438;
 const FLOOR = 422;                 // 娃娃堆放的地板
-const BARRIER_X = 58, BARRIER_TOP = FLOOR - 70; // 洞口前的壓克力擋板（v1.1 加高，避免娃娃堆自己滾進洞）
+const BARRIER_X = 58, BARRIER_TOP = FLOOR - 105; // 洞口前的壓克力擋板（加高至 105px 支撐豐富娃娃堆）
 const RAIL_Y = 34;
 const HOME_X = 34, RIGHT_LIMIT = 232;   // 爪子起點在洞口正上方
 const REST_LEN = 12;
-function getMaxLen() { return 280 + ((save.upgrades || {}).rope || 0) * 45; }
+function getMaxLen() { return 280 + ((save.upgrades || {}).rope || 0) * 50; }
 const GRAV = 520;
 function getSpeed(base) { return base * (1 + ((save.upgrades || {}).speed || 0) * 0.15); }
 const MOVE_SPEED = 72, BACK_SPEED = 60, DESCEND_SPEED = 70, RISE_SPEED = 48;
 const PRIZE_R = 8;
-function getRoundTime() { return 15 + ((save.upgrades || {}).time || 0) * 3; }
+function getRoundTime() { return 15 + ((save.upgrades || {}).time || 0) * 4; }
 const COIN = 10, PITY_COST = 300;
 const HOLD_OPEN = 0.45;
 const STEP = 1 / 120;
@@ -200,9 +241,19 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0 } });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0 });
 let save = defSave();
-try { const raw = localStorage.getItem(SAVE_KEY); if (raw) save = Object.assign(defSave(), JSON.parse(raw)); } catch (e) { /* 無痕模式等情況就用記憶體 */ }
+try {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (raw) {
+    const loaded = JSON.parse(raw);
+    save = Object.assign(defSave(), loaded);
+    save.upgrades = Object.assign({ rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, loaded.upgrades || {});
+    save.buffs = loaded.buffs || {};
+    save.theme = loaded.theme || 'animal';
+    save.lastRefill = loaded.lastRefill || 0;
+  }
+} catch (e) { /* 無痕模式等情況就用記憶體 */ }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 
 /* ============ 像素圖產生器 ============ */
@@ -241,59 +292,96 @@ const RARITY = [
 ];
 
 const KINDS = [
-  { id: 'bear', name: '小熊', rar: 0, w: 1.0,
+  { id: 'bear', name: '小熊', rar: 0, w: 1.0, r: 8,
     shape(p) { const B = '#c8834a'; p.ell(3.5, 4.5, 2.3, 2.3, B); p.ell(12.5, 4.5, 2.3, 2.3, B); p.ell(8, 10, 6.6, 5.6, B); p.ell(8, 12, 2.8, 1.9, '#efc08a'); p.px(3, 4, '#8a5228'); p.px(12, 4, '#8a5228'); },
     face(p) { eyes(p, 5, 10, 9); p.px(7, 11, OUT); p.px(8, 11, OUT); blush(p, 11); } },
-  { id: 'bunny', name: '兔兔', rar: 0, w: 1.0,
+  { id: 'bunny', name: '兔兔', rar: 0, w: 1.0, r: 8,
     shape(p) { const C = '#f4f0ff', P = '#ffb3cf'; p.rect(4, 0, 2, 7, C); p.rect(10, 0, 2, 7, C); p.rect(5, 1, 1, 4, P); p.rect(10, 1, 1, 4, P); p.ell(8, 10.5, 6.3, 5.3, C); },
     face(p) { eyes(p, 5, 10, 10); p.px(7, 12, OUT); p.px(8, 12, OUT); blush(p, 12); } },
-  { id: 'cat', name: '喵喵', rar: 0, w: 1.0,
+  { id: 'cat', name: '喵喵', rar: 0, w: 1.0, r: 8,
     shape(p) { const C = '#ff9a3c', D = '#d9701f'; catEars(p, C); p.ell(8, 10, 6.6, 5.6, C); p.rect(7, 5, 2, 2, D); p.px(3, 9, D); p.px(12, 9, D); },
     face(p) { eyes(p, 5, 10, 9); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(1, 10, OUT); p.px(14, 10, OUT); blush(p, 11); } },
-  { id: 'frog', name: '青蛙', rar: 0, w: 1.0,
+  { id: 'frog', name: '青蛙', rar: 0, w: 1.0, r: 8,
     shape(p) { const G = '#5dcf4a'; p.ell(4.5, 5, 2.7, 2.5, G); p.ell(11.5, 5, 2.7, 2.5, G); p.ell(8, 10.5, 7, 5.3, G); p.ell(8, 13, 4, 2, '#bff08a'); },
     face(p) { p.rect(4, 4, 2, 2, '#fff'); p.rect(10, 4, 2, 2, '#fff'); p.px(5, 5, OUT); p.px(10, 5, OUT); p.rect(6, 10, 4, 1, OUT); blush(p, 10); } },
-  { id: 'chick', name: '小雞', rar: 0, w: 1.0,
+  { id: 'chick', name: '小雞', rar: 0, w: 1.0, r: 8,
     shape(p) { const Y = '#ffd84a'; p.px(8, 2, Y); p.px(7, 3, Y); p.px(8, 3, Y); p.ell(8, 10, 6.3, 6, Y); p.px(3, 11, '#f2b62a'); p.px(3, 12, '#f2b62a'); p.px(12, 11, '#f2b62a'); p.px(12, 12, '#f2b62a'); },
     face(p) { eyes(p, 5, 10, 9); p.rect(7, 10, 2, 1, '#ff8a2a'); p.rect(7, 11, 2, 1, '#e0601a'); blush(p, 11, 4, 11); } },
-  { id: 'penguin', name: '企鵝', rar: 0, w: 1.0,
+  { id: 'penguin', name: '企鵝', rar: 0, w: 1.0, r: 8,
     shape(p) { p.ell(8, 9.5, 6.5, 6.3, '#2f3f7a'); p.ell(8, 11, 4.2, 4.4, '#f4f0ff'); },
     face(p) { eyes(p, 6, 9, 9); p.rect(7, 10, 2, 1, '#ff9a3c'); p.px(5, 15, '#ff9a3c'); p.px(6, 15, '#ff9a3c'); p.px(9, 15, '#ff9a3c'); p.px(10, 15, '#ff9a3c'); blush(p, 11, 5, 10); } },
-  { id: 'dino', name: '小恐龍', rar: 1, w: 1.2,
+  { id: 'bouncy_slime', name: '跳跳史萊姆', rar: 0, w: 0.9, r: 8.5, slime: true,
+    shape(p) { const G = '#32cd32'; p.ell(8, 10, 7, 5, G); p.ell(8, 8, 5, 4, '#7cfc00'); },
+    face(p) { eyes(p, 6, 10, 11); p.px(8, 12, OUT); } },
+  { id: 'dino', name: '小恐龍', rar: 1, w: 1.4, r: 11,
     shape(p) { const S = '#ff5fa2'; for (const x of [5, 8, 11]) { p.px(x, 2, S); p.rect(x - 1, 3, 3, 1, S); } p.ell(8, 10, 6.6, 5.8, '#3fc9a8'); p.ell(8, 13, 3, 1.6, '#a8f0d8'); },
     face(p) { eyes(p, 5, 10, 9); p.rect(6, 11, 4, 1, OUT); p.px(7, 12, '#fff'); blush(p, 11); } },
-  { id: 'ghost', name: '幽靈', rar: 1, w: 1.2,
+  { id: 'ghost', name: '幽靈', rar: 1, w: 1.3, r: 11,
     shape(p) { const C = '#e8e4ff'; p.ell(8, 8, 6, 5.6, C); p.rect(2, 8, 12, 6, C); p.rect(2, 14, 2, 1, C); p.rect(7, 14, 2, 1, C); p.rect(12, 14, 2, 1, C); },
     face(p) { eyes(p, 5, 10, 8); p.rect(7, 10, 2, 2, OUT); blush(p, 10, 4, 11); } },
-  { id: 'octo', name: '章魚', rar: 1, w: 1.2,
+  { id: 'octo', name: '章魚', rar: 1, w: 1.4, r: 11,
     shape(p) { const C = '#ff6b6b'; p.ell(8, 7, 6, 5.5, C); p.rect(2, 10, 12, 3, C); for (const x of [2, 5, 9, 12]) p.rect(x, 13, 2, 2, C); p.px(6, 3, '#ff9a9a'); p.px(10, 4, '#ff9a9a'); },
     face(p) { eyes(p, 5, 10, 7); p.rect(7, 9, 2, 2, '#8a1f2f'); blush(p, 9, 4, 11); } },
-  { id: 'slime', name: '史萊姆', rar: 1, w: 1.2,
+  { id: 'slime', name: '史萊姆', rar: 1, w: 1.3, r: 11,
     shape(p) { const C = '#4aa8ff'; p.ell(8, 11.2, 6.8, 4.6, C); p.ell(8, 7.5, 4, 3.2, C); p.rect(7, 3, 2, 2, C); p.px(5, 8, '#bfe4ff'); p.px(5, 9, '#bfe4ff'); p.px(6, 7, '#bfe4ff'); },
     face(p) { eyes(p, 6, 9, 11); p.px(7, 13, OUT); p.px(8, 13, OUT); blush(p, 12, 4, 11); } },
-  { id: 'lucky', name: '金色招財貓', rar: 2, w: 1.5,
+  { id: 'balloon', name: '氣球娃', rar: 1, w: 0.5, r: 11, balloon: true,
+    shape(p) { const R = '#ff4a4a'; p.ell(8, 8, 6.5, 7.5, R); p.px(8, 15, R); p.rect(7, 16, 3, 1, '#fff'); },
+    face(p) { eyes(p, 5, 10, 8); blush(p, 10, 4, 11); } },
+  { id: 'bomb', name: '炸彈娃', rar: 1, w: 1.8, r: 12, bomb: true,
+    shape(p) { const K = '#111', O = '#ff8c00'; p.ell(8, 9, 7, 7, K); p.rect(6, 1, 4, 2, K); p.rect(7, 0, 2, 2, O); },
+    face(p) { p.px(5, 8, '#fff'); p.px(10, 8, '#fff'); p.rect(6, 11, 4, 1, '#fff'); } },
+  { id: 'magnet_doll', name: '引力星', rar: 1, w: 2.0, r: 12, magnetDoll: true,
+    shape(p) { const P = '#8a2be2', S = '#da70d6'; p.ell(8, 8, 8, 8, P); p.ell(8, 8, 4, 4, S); },
+    face(p) { p.px(7, 8, '#fff'); p.px(9, 8, '#fff'); } },
+  { id: 'lucky', name: '金色招財貓', rar: 2, w: 2.8, r: 16,
     shape(p) { const G = '#ffd23f'; catEars(p, G); p.ell(8, 10, 6.6, 5.6, G); p.ell(13.6, 5.6, 1.8, 2.3, G); p.rect(4, 13, 8, 1, '#e8336b'); p.px(5, 6, '#fff3a8'); p.px(6, 6, '#fff3a8'); },
     face(p) { p.px(4, 9, OUT); p.px(5, 8, OUT); p.px(6, 9, OUT); p.px(9, 9, OUT); p.px(10, 8, OUT); p.px(11, 9, OUT); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(8, 14, '#e0a020'); p.px(7, 14, '#e0a020'); blush(p, 11); } },
-  { id: 'mimic', name: '寶箱怪', rar: 2, jackpot: true, w: 1.5,
+  { id: 'mimic', name: '寶箱怪', rar: 2, jackpot: true, w: 3.3, r: 17,
     shape(p) { p.rect(2, 3, 12, 12, '#a8642a'); p.clear(2, 3); p.clear(13, 3); p.rect(3, 3, 10, 1, '#ffd23f'); p.rect(2, 8, 12, 2, '#2a0a1a'); p.rect(7, 11, 2, 2, '#ffd23f'); p.rect(2, 14, 12, 1, '#6e3a14'); },
     face(p) { for (const x of [3, 5, 9, 11]) p.px(x, 8, '#fff'); for (const x of [4, 10, 12]) p.px(x, 9, '#fff'); p.rect(6, 9, 3, 1, PINK); p.px(5, 5, '#ff3b3b'); p.px(10, 5, '#ff3b3b'); p.px(4, 4, OUT); p.px(11, 4, OUT); } },
-    { id: 'bomb', name: '炸彈娃', rar: 1, w: 1.5, r: 9, bomb: true,
-      shape(p) { const K = '#111', O = '#ff8c00'; p.ell(8, 9, 7, 7, K); p.rect(6, 1, 4, 2, K); p.rect(7, 0, 2, 2, O); },
-      face(p) { p.px(5, 8, '#fff'); p.px(10, 8, '#fff'); p.rect(6, 11, 4, 1, '#fff'); } },
-    { id: 'anvil', name: '重力磚塊', rar: 2, w: 3.5, r: 12,
-      shape(p) { const G = '#666', D = '#444'; p.rect(1, 4, 14, 10, G); p.rect(0, 14, 16, 3, D); },
-      face(p) { p.px(5, 9, '#000'); p.px(10, 9, '#000'); p.rect(7, 12, 2, 1, '#000'); } },
-    { id: 'balloon', name: '氣球娃', rar: 1, w: 0.5, r: 8, balloon: true,
-      shape(p) { const R = '#ff4a4a'; p.ell(8, 8, 6.5, 7.5, R); p.px(8, 15, R); p.rect(7, 16, 3, 1, '#fff'); },
-      face(p) { eyes(p, 5, 10, 8); blush(p, 10, 4, 11); } },
-    { id: 'magnet_doll', name: '引力星', rar: 1, w: 2.0, r: 10, magnetDoll: true,
-      shape(p) { const P = '#8a2be2', S = '#da70d6'; p.ell(8, 8, 8, 8, P); p.ell(8, 8, 4, 4, S); },
-      face(p) { p.px(7, 8, '#fff'); p.px(9, 8, '#fff'); } },
-    { id: 'bouncy_slime', name: '跳跳史萊姆', rar: 0, w: 0.8, r: 8, slime: true,
-      shape(p) { const G = '#32cd32'; p.ell(8, 10, 7, 5, G); p.ell(8, 8, 5, 4, '#7cfc00'); },
-      face(p) { eyes(p, 6, 10, 11); p.px(8, 12, OUT); } }
-  ];
+  { id: 'anvil', name: '重力磚塊', rar: 2, w: 4.0, r: 17,
+    shape(p) { const G = '#666', D = '#444'; p.rect(1, 4, 14, 10, G); p.rect(0, 14, 16, 3, D); },
+    face(p) { p.px(5, 9, '#000'); p.px(10, 9, '#000'); p.rect(7, 12, 2, 1, '#000'); } },
+  { id: 'king_slime', name: '史萊姆王', rar: 2, w: 3.2, r: 17, slime: true,
+    shape(p) { const C = '#2b7fff'; p.ell(8, 11, 7, 5, C); p.ell(8, 8, 5, 3.5, C); p.rect(5, 1, 6, 2, '#ffd23f'); p.px(5, 0, '#ffd23f'); p.px(7, 0, '#ffd23f'); p.px(10, 0, '#ffd23f'); },
+    face(p) { eyes(p, 6, 10, 10); blush(p, 11, 4, 11); p.rect(7, 12, 2, 1, '#1c1236'); } },
+  { id: 'robo_boss', name: '鋼鐵巨神', rar: 2, w: 3.8, r: 17,
+    shape(p) { const M = '#8892b0', D = '#4c566a'; p.rect(2, 2, 12, 12, M); p.rect(1, 4, 14, 8, D); p.rect(4, 0, 8, 2, '#ff5fa2'); },
+    face(p) { p.rect(4, 7, 8, 2, '#3ff0ff'); p.px(7, 8, '#fff'); p.px(8, 8, '#fff'); p.rect(5, 11, 6, 1, '#2e3440'); } }
+];
 KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face, k); });
+
+const THEMES = {
+  animal: {
+    id: 'animal',
+    name: '🧸 動物樂園機',
+    top: ['bear', 'bunny', 'cat', 'frog', 'chick', 'penguin', 'bouncy_slime'],
+    mid: ['dino', 'octo', 'balloon', 'bomb'],
+    bottom: ['lucky', 'mimic']
+  },
+  cute: {
+    id: 'cute',
+    name: '💖 可愛夢幻機',
+    top: ['bunny', 'chick', 'cat', 'bouncy_slime'],
+    mid: ['ghost', 'balloon', 'bomb', 'slime'],
+    bottom: ['mimic', 'lucky']
+  },
+  mecha: {
+    id: 'mecha',
+    name: '⚙️ 鋼鐵機械機',
+    top: ['penguin', 'cat', 'bear'],
+    mid: ['bomb', 'magnet_doll', 'dino'],
+    bottom: ['anvil', 'robo_boss', 'mimic']
+  },
+  slime: {
+    id: 'slime',
+    name: '🧪 奇幻軟泥機',
+    top: ['bouncy_slime', 'frog', 'chick'],
+    mid: ['slime', 'magnet_doll', 'balloon'],
+    bottom: ['king_slime', 'anvil']
+  }
+};
 
 /* 台主頭像（兩格嘴型） */
 function bossShape(p) {
@@ -421,8 +509,15 @@ let round = null, dropRequested = false, booted = false;
 const input = { left: false, right: false, tLeft: false, tRight: false };
 
 function rollKind() {
-  const r = Math.random(); const rar = r < RARITY[0].p ? 0 : r < RARITY[0].p + RARITY[1].p ? 1 : 2;
-  return KINDS.indexOf(pick(KINDS.filter(k => k.rar === rar)));
+  const theme = THEMES[save.theme || 'animal'] || THEMES.animal;
+  const luck = ((save.upgrades || {}).luck || 0) * 0.08;
+  const p0 = Math.max(0.25, RARITY[0].p - luck);
+  const p1 = RARITY[1].p + luck * 0.5;
+  const r = Math.random(); const rar = r < p0 ? 0 : r < p0 + p1 ? 1 : 2;
+  const pool = rar === 2 ? theme.bottom : rar === 1 ? theme.mid : theme.top;
+  const chosenId = pick(pool);
+  const idx = KINDS.findIndex(k => k.id === chosenId);
+  return idx >= 0 ? idx : 0;
 }
 function addPrize(x, y, kind = -1) {
   if (kind === -1) kind = rollKind();
@@ -509,11 +604,12 @@ function findTarget(geom) {
 
 function decideFate(p, lx) {
   if (round.guaranteed) return { hold: true };
-  const strength = save.buffs.strong ? 1.0 : rand(0.15, 0.45);
+  const baseStr = rand(0.20, 0.50) * (1 + ((save.upgrades || {}).str || 0) * 0.20);
+  const strength = save.buffs.strong ? 1.0 : baseStr;
   const center = clamp(1 - Math.abs(lx) / 11, 0, 1);
   const swing = clamp(1 - Math.abs(claw.omega) * 0.25, 0.6, 1);
   const q = strength * (0.4 + 0.6 * center) * swing / KINDS[p.kind].w;
-  const chance = clamp((q - 0.20) * 1.5, 0, 0.55);
+  const chance = clamp((q - 0.18) * 1.6, 0, 0.65);
   if (Math.random() < chance) return { hold: true, chance };
   const r = Math.random();
   if (r < 0.4) return { hold: false, phase: 'rise', frac: rand(0.2, 0.9), chance };
@@ -720,8 +816,17 @@ function step(dt) {
   /* 娃娃積分 */
   for (const p of prizes) {
     if (p.held) continue;
-    p.vy += (KINDS[p.kind].balloon ? -GRAV * 0.15 : GRAV) * dt;
-    p.vx *= (1 - 0.3 * dt); p.vy *= (1 - 0.1 * dt);
+    if (KINDS[p.kind].balloon) {
+      const targetY = 220;
+      const buoy = p.y > targetY ? -GRAV * 0.35 : GRAV * 0.25;
+      p.vy += buoy * dt;
+      p.vy *= (1 - 1.5 * dt);
+      if (p.y < 185) { p.y = 185; p.vy = Math.max(0, p.vy); }
+    } else {
+      p.vy += GRAV * dt;
+      p.vy *= (1 - 0.1 * dt);
+    }
+    p.vx *= (1 - 0.3 * dt);
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.noArm > 0) p.noArm -= dt;
   }
@@ -776,12 +881,13 @@ function step(dt) {
   for (let i = prizes.length - 1; i >= 0; i--) {
     const p = prizes[i];
     if (p.held) continue;
-    if (p.x < GLASS_L + (p.r || 8)) { p.x = GLASS_L + (p.r || 8); p.vx = Math.abs(p.vx) * 0.3; }
+    const minX = booted ? GLASS_L + (p.r || 8) : BARRIER_X + (p.r || 8) + 2;
+    if (p.x < minX) { p.x = minX; p.vx = Math.abs(p.vx) * 0.3; }
     if (p.x > GLASS_R - (p.r || 8)) { p.x = GLASS_R - (p.r || 8); p.vx = -Math.abs(p.vx) * 0.3; }
     if (p.y < GLASS_T + (p.r || 8)) { p.y = GLASS_T + (p.r || 8); p.vy = Math.abs(p.vy) * 0.2; }
     if (p.x >= BARRIER_X && p.y + (p.r || 8) > FLOOR) {
       p.y = FLOOR - (p.r || 8);
-      if (p.vy > 150 && KINDS[p.kind].bomb && !p.exploded) {
+      if (booted && mode !== 'idle' && p.vy > 150 && KINDS[p.kind].bomb && !p.exploded) {
         p.exploded = true;
         Sfx.drop();
         for (const op of prizes) {
@@ -795,7 +901,8 @@ function step(dt) {
       p.vy = p.vy > 60 ? -p.vy * (KINDS[p.kind].slime ? 0.85 : 0.2) : 0;
       p.vx *= (1 - 5 * dt);
     }
-    segPush(p, BARRIER_X, BARRIER_TOP, BARRIER_X, FLOOR + 30, 1);
+    segPush(p, BARRIER_X, BARRIER_TOP, BARRIER_X, FLOOR + 30, 2);
+    segPush(p, BARRIER_X, BARRIER_TOP, BARRIER_X + 6, BARRIER_TOP, 2);
     if (p.x < BARRIER_X && p.y > FLOOR + 14) collect(p);
   }
 
@@ -953,11 +1060,59 @@ function updateUI() {
   $('#btnMute').textContent = save.muted ? '🔇' : '🔊';
   $('#btnCoin').firstChild.textContent = credits > 0 ? `投幣 10 元(${credits})` : '投幣 10 元';
 
+  const statusEl = $('#statusBadges');
+  if (statusEl) {
+    const badges = [];
+    if (save.buffs.strong) badges.push('<span class="badge-item buff">💪 強爪(生效中)</span>');
+    if (save.buffs.radar) badges.push('<span class="badge-item buff">🎯 雷達(生效中)</span>');
+    if (save.buffs.magnet) badges.push('<span class="badge-item buff">🧲 磁鐵(生效中)</span>');
+
+    const upgNames = {
+      rope: { icon: '🧵', name: '加長繩索' },
+      str: { icon: '⚙️', name: '升級馬達' },
+      time: { icon: '⏳', name: '操作延時' },
+      speed: { icon: '⚡', name: '高速齒輪' },
+      size: { icon: '🧤', name: '巨型爪' },
+      luck: { icon: '🌟', name: '幸運星' }
+    };
+    for (const [key, info] of Object.entries(upgNames)) {
+      const lvl = (save.upgrades || {})[key] || 0;
+      if (lvl > 0) {
+        badges.push(`<span class="badge-item active">${info.icon} ${info.name} Lv.${lvl}</span>`);
+      }
+    }
+    statusEl.innerHTML = badges.length > 0 ? badges.join('') : '<span class="badge-empty">尚未改裝機台 (可前往商店升級)</span>';
+  }
+
   const canMove = mode === 'move';
   $('#btnLeft').disabled = !canMove;
   $('#btnRight').disabled = !canMove;
   $('#btnDrop').disabled = !canMove;
   $('#btnCoin').disabled = mode !== 'idle';
+
+  const isPlaying = mode !== 'idle';
+  const themeSel = $('#themeSelect');
+  if (themeSel) {
+    if (save.theme && themeSel.value !== save.theme) themeSel.value = save.theme;
+    themeSel.disabled = isPlaying;
+  }
+
+  const btnRefill = $('#btnRefill');
+  if (btnRefill) {
+    const cd = Math.max(0, 180 - Math.floor((Date.now() - (save.lastRefill || 0)) / 1000));
+    if (isPlaying) {
+      btnRefill.disabled = true;
+      btnRefill.textContent = '🔄 遊戲進行中…';
+    } else if (cd > 0) {
+      const m = Math.floor(cd / 60);
+      const s = String(cd % 60).padStart(2, '0');
+      btnRefill.disabled = true;
+      btnRefill.textContent = `🔄 重整機台 (${m}:${s})`;
+    } else {
+      btnRefill.disabled = false;
+      btnRefill.textContent = '🔄 重整機台 (可使用)';
+    }
+  }
 }
 
 const modal = $('#modal');
@@ -966,14 +1121,15 @@ function openModal(title, html, after) {
   if (after) after();
 }
 function closeModal() { modal.hidden = true; }
+const getSellPrice = k => k.rar === 2 ? 250 : k.rar === 1 ? 60 : 25;
 function openDex() {
   const got = KINDS.filter(k => save.coll[k.id]).length;
-  let html = `<div class="dex-sum" style="position:relative">收集進度 ${got} / ${KINDS.length}｜夾到 ${save.wins} 隻｜花費 NT$${fmt(save.spent)}<br>
+  let html = `<div class="dex-sum" style="position:relative;padding-right:120px">收集進度 ${got} / ${KINDS.length}｜夾到 ${save.wins} 隻｜花費 NT$${fmt(save.spent)}<br>
   <button class="pbtn small" id="btnSellAll" style="position:absolute; right:0; top:0; background:var(--green)">一鍵出售重複娃</button></div><div class="dex">`;
   KINDS.forEach((k, i) => {
     const n = save.coll[k.id] || 0;
-    const price = k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20;
-    html += `<div class="dex-item"><canvas width="18" height="18" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div>`;
+    const price = getSellPrice(k);
+    html += `<div class="dex-item"><canvas width="32" height="32" data-i="${i}" data-got="${n ? 1 : 0}"></canvas><div class="nm">${n ? k.name : '？？？'}</div><div class="rr" style="color:${RARITY[k.rar].color}">${RARITY[k.rar].name}</div><div class="ct">${n ? '× ' + n : '未獲得'}</div>`;
     if (n > 0) html += `<button class="pbtn small btn-sell" data-i="${i}" style="margin-top:6px;width:100%;font-size:11px;padding:4px">賣出 +${price}🪙</button>`;
     html += `</div>`;
   });
@@ -982,19 +1138,21 @@ function openDex() {
     const btnSellAll = $('#btnSellAll');
     if (btnSellAll) btnSellAll.addEventListener('click', () => {
       let earned = 0;
+      let count = 0;
       KINDS.forEach(k => {
         if (save.coll[k.id] > 1) {
           const excess = save.coll[k.id] - 1;
           save.coll[k.id] = 1;
-          earned += excess * (k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20);
+          earned += excess * getSellPrice(k);
+          count += excess;
         }
       });
       if (earned > 0) {
         save.tokens = (save.tokens || 0) + earned;
         Sfx.ensure(); Sfx.win(); persist(); updateUI(); openDex();
-        alert(`已出售所有重複娃娃，獲得 ${earned} 🪙！`);
+        toast(`💰 賣出 ${count} 隻重複娃娃，獲得 +${earned} 🪙！`);
       } else {
-        alert('沒有重複的娃娃可以出售喔！');
+        toast('目前沒有重複的娃娃可以出售喔！');
       }
     });
 
@@ -1002,70 +1160,95 @@ function openDex() {
       const k = KINDS[c.dataset.i];
       const cx = c.getContext('2d');
       cx.imageSmoothingEnabled = false;
-      cx.drawImage(k.img, 0, 0);
+      const sp = k.sprite;
+      if (sp) {
+        const dx = Math.round((c.width - sp.width) / 2);
+        const dy = Math.round((c.height - sp.height) / 2);
+        cx.drawImage(sp, dx, dy);
+      }
       if (c.dataset.got === '0') {
         cx.globalCompositeOperation = 'source-in';
-        cx.fillStyle = '#080414'; cx.fillRect(0, 0, 18, 18);
+        cx.fillStyle = '#080414';
+        cx.fillRect(0, 0, c.width, c.height);
       }
     });
     document.querySelectorAll('.btn-sell').forEach(b => b.addEventListener('click', e => {
       const k = KINDS[e.target.dataset.i];
       if (save.coll[k.id] > 0) {
         save.coll[k.id]--;
-        save.tokens = (save.tokens || 0) + (k.rar === 2 ? 200 : k.rar === 1 ? 50 : 20);
-        Sfx.ensure(); Sfx.win(); persist(); updateUI(); openDex();
+        const price = getSellPrice(k);
+        save.tokens = (save.tokens || 0) + price;
+        Sfx.ensure(); Sfx.coin(); persist(); updateUI(); openDex();
+        toast(`💰 賣出 ${k.name}，獲得 +${price} 🪙！`);
       }
     }));
   });
 }
 
 function openShop() {
-  let html = `<div class="dex-sum">使用金幣購買道具。道具會在下次遊戲自動生效。目前持有：${fmt(save.tokens || 0)} 🪙</div><div class="ach">`;
-  save.upgrades = save.upgrades || { rope: 0, str: 0 };
-  const items = [
-    { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100% (不會滑落)', cost: 150, icon: '💪' },
-    { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測點', cost: 50, icon: '🎯' },
-    { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附娃娃', cost: 100, icon: '🧲' },
-        { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度', cost: 200 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
-    { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 15%', cost: 250 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 },
-    { id: 'upg_time', name: '操作延時', desc: '永久延長單局操作時間 3 秒', cost: 150 * ((save.upgrades.time || 0) + 1), icon: '⏳', isUpg: true, key: 'time', max: 3 },
-    { id: 'upg_speed', name: '高速齒輪', desc: '永久提升爪子移動速度 15%', cost: 200 * ((save.upgrades.speed || 0) + 1), icon: '⚡', isUpg: true, key: 'speed', max: 3 },
-    { id: 'upg_size', name: '巨型爪', desc: '永久微幅擴大爪子包覆判定', cost: 300 * ((save.upgrades.size || 0) + 1), icon: '🧤', isUpg: true, key: 'size', max: 3 },
-    { id: 'upg_luck', name: '幸運星', desc: '機台補貨時，更容易掉落稀有以上娃娃', cost: 400 * ((save.upgrades.luck || 0) + 1), icon: '🌟', isUpg: true, key: 'luck', max: 3 }
+  save.upgrades = save.upgrades || { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 };
+  const buffItems = [
+    { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100%（不會滑落）', cost: 120, icon: '💪' },
+    { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測落點', cost: 40, icon: '🎯' },
+    { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附周圍娃娃', cost: 80, icon: '🧲' }
   ];
-  items.forEach(it => {
+  const upgradeItems = [
+    { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度（必備）', cost: 120 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
+    { id: 'upg_str', name: '升級馬達', desc: '永久增加基礎爪力 20%，降低空中滑落率', cost: 150 * ((save.upgrades.str || 0) + 1), icon: '⚙️', isUpg: true, key: 'str', max: 3 },
+    { id: 'upg_time', name: '操作延時', desc: '永久延長單局操作時間 4 秒', cost: 100 * ((save.upgrades.time || 0) + 1), icon: '⏳', isUpg: true, key: 'time', max: 3 },
+    { id: 'upg_speed', name: '高速齒輪', desc: '永久提升爪子移動與升降速度 15%', cost: 120 * ((save.upgrades.speed || 0) + 1), icon: '⚡', isUpg: true, key: 'speed', max: 3 },
+    { id: 'upg_size', name: '巨型爪', desc: '永久等比例放大爪子視覺外觀與抓取包覆判定', cost: 200 * ((save.upgrades.size || 0) + 1), icon: '🧤', isUpg: true, key: 'size', max: 3 },
+    { id: 'upg_luck', name: '幸運星', desc: '機台補貨時，大幅提高稀有與傳說娃娃機率', cost: 250 * ((save.upgrades.luck || 0) + 1), icon: '🌟', isUpg: true, key: 'luck', max: 3 }
+  ];
+  const allItems = [...buffItems, ...upgradeItems];
+
+  const renderItem = it => {
     const isUpg = it.isUpg;
     const lvl = isUpg ? (save.upgrades[it.key] || 0) : 0;
     const maxed = isUpg && lvl >= it.max;
     const owned = !isUpg && save.buffs[it.id];
     const disabled = owned || maxed;
-    html += `<div class="ach-item ${disabled ? 'locked' : ''}">
+    return `<div class="ach-item ${disabled ? 'locked' : ''}">
       <div class="ic">${it.icon}</div>
       <div style="flex:1">
-        <div class="t" style="color:var(--yellow)">${it.name} ${isUpg ? `(Lv.${lvl}/${it.max})` : (owned ? '(已擁有)' : '')}</div>
+        <div class="t" style="color:var(--yellow)">${it.name} ${isUpg ? `<small style="color:var(--cyan);font-size:12px">(Lv.${lvl}/${it.max})</small>` : (owned ? '<small style="color:var(--green);font-size:12px">(已備妥)</small>' : '')}</div>
         <div class="d">${it.desc}</div>
       </div>
       <button class="pbtn small btn-buy" data-id="${it.id}" data-cost="${it.cost}" ${disabled ? 'disabled' : ''}>${maxed ? 'MAX' : it.cost + '🪙'}</button>
     </div>`;
-  });
-  html += '</div>';
+  };
+
+  let html = `<div class="dex-sum">使用金幣購買單局道具或升級機台。目前持有：<b style="color:var(--cyan)">${fmt(save.tokens || 0)} 🪙</b></div>`;
+  html += `<div class="shop-sec-title">⚡ 單局增益道具（購買後下一局自動生效）</div><div class="ach">`;
+  buffItems.forEach(it => { html += renderItem(it); });
+  html += `</div><div class="shop-sec-title">⚙️ 永久機台改裝（RPG 核心強化）</div><div class="ach">`;
+  upgradeItems.forEach(it => { html += renderItem(it); });
+  html += `</div>`;
+
   openModal('金幣商店', html, () => {
     document.querySelectorAll('.btn-buy').forEach(b => b.addEventListener('click', e => {
       const id = e.target.dataset.id;
-      const cost = parseInt(e.target.dataset.cost);
-      const it = items.find(i => i.id === id);
+      const it = allItems.find(i => i.id === id);
+      if (!it) return;
       const isUpg = it.isUpg;
       const lvl = isUpg ? (save.upgrades[it.key] || 0) : 0;
       const maxed = isUpg && lvl >= it.max;
       const owned = !isUpg && save.buffs[it.id];
+      const cost = it.cost;
       
       if ((save.tokens || 0) >= cost && !owned && !maxed) {
         save.tokens -= cost;
-        if (isUpg) save.upgrades[it.key] = lvl + 1;
-        else save.buffs[id] = true;
+        if (isUpg) {
+          save.upgrades[it.key] = lvl + 1;
+          toast(`⚙️ 升級成功！【${it.name}】達 Lv.${lvl + 1}`);
+        } else {
+          save.buffs[id] = true;
+          toast(`🧪 已購買【${it.name}】，下一局將自動生效！`);
+        }
         Sfx.ensure(); Sfx.win(); persist(); updateUI(); openShop();
       } else if (!owned && !maxed) {
-        alert('金幣不足！快去娃娃櫃賣掉重複的娃娃吧。');
+        toast('🪙 金幣不足！快去娃娃櫃賣掉重複的娃娃吧');
+        Sfx.ensure(); Sfx.slip();
       }
     }));
   });
@@ -1095,6 +1278,7 @@ window.addEventListener('keydown', e => {
   else if (e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); if (!e.repeat) requestDrop(); }
   else if (e.key === 'Enter' || e.key === 'c' || e.key === 'C') { e.preventDefault(); if (!e.repeat) insertCoin(); }
   else if (e.key === 'm' || e.key === 'M') toggleMute();
+  else if (e.key === 'f' || e.key === 'F') toggleSpeed();
 });
 window.addEventListener('keyup', e => {
   if (KEY_LEFT.includes(e.key)) input.left = false;
@@ -1112,7 +1296,7 @@ holdBtn($('#btnLeft'), 'tLeft'); holdBtn($('#btnRight'), 'tRight');
 $('#btnDrop').addEventListener('pointerdown', e => { e.preventDefault(); Sfx.ensure(); requestDrop(); });
 $('#btnCoin').addEventListener('click', insertCoin);
 $('#btnDex').addEventListener('click', openDex);
-  $('#btnShop').addEventListener('click', openShop);
+$('#btnShop').addEventListener('click', openShop);
 $('#btnAch').addEventListener('click', openAch);
 $('#btnMute').addEventListener('click', toggleMute);
 $('#modalClose').addEventListener('click', closeModal);
@@ -1121,34 +1305,109 @@ document.addEventListener('click', e => { const b = e.target.closest('button'); 
 document.addEventListener('visibilitychange', () => { if (document.hidden) Sfx.setMotor(false); });
 function toggleMute() { Sfx.ensure(); save.muted = !save.muted; if (save.muted) Sfx.setMotor(false); persist(); updateUI(); }
 
-/* ============ 啟動 ============ */
+/* ============ 倍速與機台管理 ============ */
+let timeScale = 1;
+function toggleSpeed() {
+  timeScale = timeScale === 1 ? 2 : 1;
+  const btn = $('#btnSpeed');
+  if (btn) {
+    btn.textContent = timeScale === 2 ? '⏩ 2X' : '▶ 1X';
+    btn.classList.toggle('active', timeScale === 2);
+  }
+  toast(timeScale === 2 ? '⚡ 已開啟 2 倍速！' : '▶ 已切換回正常速度 (1X)');
+}
+$('#btnSpeed')?.addEventListener('click', toggleSpeed);
 
-  // Spawn 65 dolls layered
-  // Bottom: Legends/Heavies, Middle: Rares, Top: Normals
-  for (let i = 0; i < 65; i++) {
-    let layerKind = -1;
-    const r = Math.random();
-    if (i < 20) { // Bottom
-      layerKind = r < 0.15 ? 13 : (r < 0.3 ? 12 : (r < 0.45 ? 11 : -1)); // anvil, bomb, mimic
-    } else if (i < 45) { // Middle
-      layerKind = r < 0.15 ? 14 : (r < 0.3 ? 15 : (r < 0.45 ? 12 : -1)); // balloon, magnet, bomb
-    } else { // Top
-      layerKind = r < 0.2 ? 16 : -1; // slime
-    }
-    addPrize(72 + (i % 10) * 17 + rand(-5, 5), FLOOR - 240 + Math.floor(i / 10) * 24 + rand(-5, 5), layerKind);
+function refillMachine(themeId, isManualReset = false) {
+  if (themeId) save.theme = themeId;
+  const theme = THEMES[save.theme || 'animal'] || THEMES.animal;
+  prizes = [];
+  claw.held = null;
+
+  // 95 隻娃娃三層分層配置：
+  // 底部（20隻）：傳說 / 重量級大娃娃 (r=16~17)
+  for (let i = 0; i < 20; i++) {
+    const id = pick(theme.bottom);
+    const kIdx = KINDS.findIndex(k => k.id === id);
+    const x = 78 + (i % 6) * 26 + rand(-4, 4);
+    const y = FLOOR - 70 + Math.floor(i / 6) * 16 + rand(-3, 3);
+    addPrize(x, y, kIdx >= 0 ? kIdx : 0);
+  }
+  // 中部（35隻）：特殊功能中型娃娃 (r=11~12)
+  for (let i = 0; i < 35; i++) {
+    const id = pick(theme.mid);
+    const kIdx = KINDS.findIndex(k => k.id === id);
+    const x = 76 + (i % 8) * 20 + rand(-4, 4);
+    const y = FLOOR - 145 + Math.floor(i / 8) * 18 + rand(-3, 3);
+    addPrize(x, y, kIdx >= 0 ? kIdx : 0);
+  }
+  // 頂部（40隻）：標準初階小娃娃 (r=8)
+  for (let i = 0; i < 40; i++) {
+    const id = pick(theme.top);
+    const kIdx = KINDS.findIndex(k => k.id === id);
+    const x = 75 + (i % 8) * 20 + rand(-3, 3);
+    const y = FLOOR - 235 + Math.floor(i / 8) * 18 + rand(-3, 3);
+    addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
 
-for (let i = 0; i < 600; i++) step(STEP); // 先讓娃娃自然堆好
+  const prevBooted = booted;
+  booted = false;
+  for (let i = 0; i < 600; i++) step(STEP);
+  for (const p of prizes) { p.vx = 0; p.vy = 0; }
+  booted = prevBooted;
+  particles = [];
+
+  if (isManualReset) {
+    save.lastRefill = Date.now();
+    persist();
+    toast(`🔄 已重整【${theme.name}】！娃娃已重新補滿`);
+    say(`補貨完成！全新一批【${theme.name}】上架囉，快來試手氣！`);
+    Sfx.ensure(); Sfx.coin();
+  }
+  updateUI();
+}
+
+function changeTheme(themeId) {
+  if (mode !== 'idle') return;
+  save.theme = themeId;
+  persist();
+  refillMachine(themeId, false);
+  const theme = THEMES[themeId] || THEMES.animal;
+  toast(`🎰 已切換至【${theme.name}】！`);
+  say(`歡迎來到【${theme.name}】！這台娃娃不一樣喔～`);
+  Sfx.ensure(); Sfx.coin();
+  updateUI();
+}
+$('#themeSelect')?.addEventListener('change', e => { changeTheme(e.target.value); });
+
+function onRefillClick() {
+  if (mode !== 'idle') return;
+  const now = Date.now();
+  const elapsed = now - (save.lastRefill || 0);
+  if (elapsed < 180000) {
+    const remainSec = Math.ceil((180000 - elapsed) / 1000);
+    const m = Math.floor(remainSec / 60);
+    const s = String(remainSec % 60).padStart(2, '0');
+    toast(`⏳ 重整冷卻中，請等待 ${m}分${s}秒！`);
+    return;
+  }
+  refillMachine(save.theme, true);
+}
+$('#btnRefill')?.addEventListener('click', onRefillClick);
+
+/* ============ 啟動 ============ */
+refillMachine(save.theme || 'animal');
 particles = []; mode = 'idle'; modeT = 0; booted = true;
 claw.px = clawGeom().hx; claw.py = clawGeom().hy;
 drawBoss(false); updateUI();
 say(save.visited && save.spent > 0 ? LINES.back[0].replace('${spent}', fmt(save.spent)) : LINES.welcome[0]);
 save.visited = true; persist();
+setInterval(updateUI, 1000);
 
 let acc = 0, last = performance.now();
 function frame(now) {
   let dt = (now - last) / 1000; last = now; if (dt > 0.1) dt = 0.1;
-  acc += dt; while (acc >= STEP) { step(STEP); acc -= STEP; }
+  acc += dt * timeScale; while (acc >= STEP) { step(STEP); acc -= STEP; }
   render(); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
