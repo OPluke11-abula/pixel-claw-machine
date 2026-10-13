@@ -6,8 +6,9 @@
 ---
 
 ## 🌟 線上立即試玩 (Play Online)
-
-👉 **[前往遊玩 PIXEL CLAW 像素夾娃娃機](https://opluke11-abula.github.io/pixel-claw-machine/)**  
+ 
+👉 **[前往遊玩 PIXEL CLAW 像素夾娃娃機 (經典 2D 完整版)](https://opluke11-abula.github.io/pixel-claw-machine/)**  
+👉 **[前往體驗 PIXEL CLAW 2.5D 等角透視立體版 (4 向天車深度對位原型)](https://opluke11-abula.github.io/pixel-claw-machine/prototype_25d.html)**  
 *(純靜態單一網頁，無需安裝任何套件，手機與電腦瀏覽器皆可順暢遊玩)*
 
 ---
