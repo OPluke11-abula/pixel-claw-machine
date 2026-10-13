@@ -53,6 +53,12 @@
 1. 擋板頂部配置雙向段推擠幾何：垂直擋板線段 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X, FLOOR+30)` 加上水平防翻倒鉤 `(BARRIER_X, BARRIER_TOP) -> (BARRIER_X+6, BARRIER_TOP)`。
 2. 重整 (`refillMachine`) 執行期間將 `booted = false`，並對 $X < \text{BARRIER\_X}$ 區域施加暫時邊界鎖定，待 600 步物理沉降完畢且速度歸零後，才將 `booted = true`，確保開場與重整 0 漏球。
 
+### 2.5 打擊感與視覺反饋 (Juiciness & Audio Polish)
+1. **螢幕微震 (Screen Shake)**：炸彈引爆時觸發 `screenShake = 6`，在 `render()` 繪圖循環中對畫布上下文應用隨機像素偏移 `ctx.translate(rand(-sx, sx), rand(-sy, sy))`，配合線性阻尼衰減，創造強烈打擊反饋。
+2. **Web Audio 合成音效擴充**：新增 `Sfx.boom()`（鋸齒波+方波快速雙重降頻爆炸聲）、`Sfx.speed()`（倍速升降音階）、`Sfx.click()`（按鍵微觸覺高頻音）。
+3. **光學雷達垂直瞄準線**：啟動雷達時自天車中心向地面繪製半透明紅色虛線雷射投影，提供精確下爪視覺輔助。
+4. **神爪金光粒子**：保夾或強爪狀態下，爪臂隨機噴發金色或青色火花粒子。
+
 ---
 
 ## 🕹️ 3. 模組與核心函式對照表

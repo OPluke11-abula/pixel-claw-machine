@@ -11,7 +11,7 @@
 :root{--ink:#f4f0ff;--dark:#0d0820;--panel:#2a1b4a;--pink:#ff5fa2;--yellow:#ffd23f;--cyan:#3ff0ff;--green:#5dff7a;--purple:#c08bff}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
-body{background:#140c2b;background-image:radial-gradient(#2a1c55 1px,transparent 1px);background-size:16px 16px;color:var(--ink);font-family:"Cubic11","PressStart",monospace;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+body{background:#140c2b;background-image:radial-gradient(#2a1c55 1px,transparent 1px);background-size:16px 16px;color:var(--ink);font-family:"Cubic11","PressStart",monospace;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 header{text-align:center;padding:16px 8px 4px}
 h1{font-family:"PressStart","Cubic11",monospace;font-weight:normal;font-size:clamp(18px,3.4vw,28px);color:var(--yellow);text-shadow:3px 3px 0 #e8336b,6px 6px 0 var(--dark);letter-spacing:2px}
 h1 small{display:block;font-family:"Cubic11",monospace;font-size:clamp(14px,2vw,18px);color:var(--cyan);text-shadow:2px 2px 0 var(--dark);margin-top:10px;letter-spacing:4px}
@@ -189,7 +189,7 @@ footer a{color:var(--cyan)}
 
     <div class="card help">
       <h2>玩法</h2>
-      <span class="kb"><b>Enter</b> 投幣、<b>← →</b> 移動、<b>Space</b> 下爪，<b>M</b> 靜音。<br></span>
+      <span class="kb"><b>Enter</b> 投幣、<b>← →</b> 移動、<b>Space</b> 下爪、<b>F</b> 倍速、<b>M</b> 靜音。<br></span>
       投幣後有 <b>15 秒</b>可以瞄準，爪子會晃，要抓準時機。爪力很弱，娃娃常常會在半空掉下來；也可以把娃娃<b>推進左下角的洞</b>，一樣算你的。
     </div>
   </aside>
@@ -241,7 +241,7 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0 });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0, visitedThemes: { animal: true } });
 let save = defSave();
 try {
   const raw = localStorage.getItem(SAVE_KEY);
@@ -252,6 +252,8 @@ try {
     save.buffs = loaded.buffs || {};
     save.theme = loaded.theme || 'animal';
     save.lastRefill = loaded.lastRefill || 0;
+    save.visitedThemes = Object.assign({ animal: true }, loaded.visitedThemes || {});
+    if (save.theme) save.visitedThemes[save.theme] = true;
   }
 } catch (e) { /* 無痕模式等情況就用記憶體 */ }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
@@ -420,6 +422,15 @@ const Sfx = {
   alarm() { for (let i = 0; i < 8; i++) this.tone(i % 2 ? 660 : 880, .12, { when: i * .13, vol: .5 }); },
   beep() { this.tone(1200, .05, { vol: .3 }); },
   ach() { [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, .1, { when: i * .07, vol: .4 })); },
+  boom() {
+    this.tone(130, .35, { to: 30, type: 'sawtooth', vol: .95 });
+    this.tone(70, .45, { to: 15, type: 'square', vol: .85 });
+  },
+  speed(on) {
+    if (on) { this.tone(523, .06, { to: 1047, vol: .35 }); }
+    else { this.tone(1047, .06, { to: 523, vol: .35 }); }
+  },
+  click() { this.tone(1100, .02, { vol: .15 }); },
   setMotor(on) {
     if (!this.ctx) return;
     if (on && !this.motor && !save.muted) {
@@ -452,7 +463,10 @@ const LINES = {
   oneshot: ['第一次就中？你是不是偷練過？'],
   idle: ['不玩嗎？後面有人在排喔。', '站著看娃娃不會自己掉下來啦～', '投一個嘛，十塊而已'],
   refill: ['補貨啦～新娃娃上架！'],
-  full: ['一次最多先投 9 枚啦，夾完再投～']
+  full: ['一次最多先投 9 枚啦，夾完再投～'],
+  theme: ['換這台試試？這台的娃娃更頂喔！', '鋼鐵機械機很硬喔，爪子不夠大別輕易下爪！', '軟泥機彈性很好，小心噴出來！', '可愛機是妹子最愛，夾一隻送人吧！'],
+  speed: ['衝那麼快！看準再按啊！', '加速模式開啟！手速跟得上嗎？', '兩倍速？年輕人就是沉不住氣！'],
+  upgrade: ['不錯喔，捨得花錢改機台了！', '升級了齁？台主開始緊張了…', '改裝完這台變神器了吧！']
 };
 const MILESTONES = [
   [100, '你已經花掉一個便當的錢了喔。'],
@@ -482,14 +496,18 @@ const ACHS = [
   { id: 'push', icon: '👉', name: '推推樂', desc: '用推的把娃娃推進洞口' },
   { id: 'pity', icon: '🚨', name: '保夾受害者', desc: '觸發一次保夾' },
   { id: 'legend', icon: '👑', name: '傳說降臨', desc: '拿到傳說娃娃' },
-  { id: 'full', icon: '📖', name: '圖鑑全收集', desc: '12 種娃娃全部到手' },
+  { id: 'full', icon: '📖', name: '圖鑑全收集', desc: `${KINDS.length} 種娃娃全部到手` },
   { id: 'plate', icon: '🍽️', name: '盤子', desc: '累積花費 1000 元' },
-  { id: 'oneshot', icon: '🎯', name: '一發入魂', desc: '第一次投幣就夾中' }
+  { id: 'oneshot', icon: '🎯', name: '一發入魂', desc: '第一次投幣就夾中' },
+  { id: 'upg_master', icon: '🛠️', name: '改裝大師', desc: '任一機台改裝達到 Lv.3' },
+  { id: 'theme_tour', icon: '🎰', name: '機台巡禮', desc: '體驗過全部 4 種主題機台' },
+  { id: 'rich', icon: '💰', name: '金幣大亨', desc: '持有金幣達到 1,000 🪙' }
 ];
 function unlock(id) {
   if (save.ach[id]) return;
   save.ach[id] = Date.now(); persist();
   const a = ACHS.find(x => x.id === id);
+  if (!a) return;
   toast(`${a.icon} 成就解鎖：${a.name}`, true); Sfx.ach();
 }
 function toast(msg, isAch) {
@@ -501,7 +519,7 @@ function toast(msg, isAch) {
 const cvs = $('#game'), ctx = cvs.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
-let prizes = [], nextId = 1;
+let prizes = [], nextId = 1, screenShake = 0;
 let particles = [], popups = [], spawnQueue = [];
 const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, off: null, offTarget: null };
 let mode = 'idle', modeT = 0, timer = getRoundTime(), credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
@@ -579,7 +597,11 @@ function insertCoin() {
 }
 
 function startRound() {
-  credits--; save.plays++; persist();
+  credits--; save.plays++;
+  save.visitedThemes = save.visitedThemes || {};
+  save.visitedThemes[save.theme || 'animal'] = true;
+  if (Object.keys(save.visitedThemes).length >= 4) unlock('theme_tour');
+  persist();
   round = { guaranteed: save.armed, collected: 0, grabbed: false, fate: null, nearMiss: false, startLen: 0, startGx: 0 };
   timer = getRoundTime(); lastBeep = 0; dropRequested = false;
   claw.open = 1;
@@ -638,10 +660,10 @@ function endRound() {
     else say(pick(LINES.fail));
   } else save.streak = 0;
   persist();
-  if (prizes.length + spawnQueue.length < 14) {
+  if (prizes.length + spawnQueue.length < 35) {
     say(pick(LINES.refill));
-    const n = 22 - prizes.length - spawnQueue.length;
-    for (let i = 0; i < n; i++) spawnQueue.push(0.5 + i * 0.18);
+    const n = Math.min(25, 60 - prizes.length - spawnQueue.length);
+    for (let i = 0; i < n; i++) spawnQueue.push(0.3 + i * 0.12);
   }
   setMode('idle'); idleT = 0; autoStartT = 0.9; claw.open = 1;
   updateUI();
@@ -889,7 +911,8 @@ function step(dt) {
       p.y = FLOOR - (p.r || 8);
       if (booted && mode !== 'idle' && p.vy > 150 && KINDS[p.kind].bomb && !p.exploded) {
         p.exploded = true;
-        Sfx.drop();
+        Sfx.boom();
+        screenShake = 6;
         for (const op of prizes) {
           const dx = op.x - p.x, dy = op.y - p.y, d = Math.hypot(dx, dy);
           if (d < 80 && d > 0) { op.vx += (dx / d) * 350; op.vy += (dy / d) * 350 - 150; }
@@ -995,9 +1018,27 @@ function drawClaw(geom) {
     ctx.fillStyle = '#c9d2e6'; ctx.fillRect(hx - 6*S, hy - 1*S, 12*S, 2*S);
   ctx.fillStyle = round && round.guaranteed && mode !== 'idle' ? (Math.floor(performance.now() / 150) % 2 ? '#ffd23f' : '#ff3b3b') : '#ff3b3b';
   ctx.fillRect(hx - 1, hy + 3, 2, 2);
+
+  // 神爪 / 保夾金色或青色光暈粒子
+  const isBuffed = (round && round.guaranteed) || save.armed || (save.buffs && save.buffs.strong);
+  if (isBuffed && mode !== 'idle') {
+    const glowCol = (round && round.guaranteed) || save.armed ? '#ffd23f' : '#38b6ff';
+    if (Math.random() < 0.4) {
+      const arm = pick(geom.arms);
+      const pt = pick(arm);
+      particles.push({ x: pt.x + rand(-3, 3), y: pt.y + rand(-3, 3), vx: rand(-10, 10), vy: rand(-15, 5), life: 0.35, col: glowCol, spark: true });
+    }
+  }
 }
 function render() {
   const t = performance.now() / 1000;
+  ctx.save();
+  if (screenShake > 0) {
+    const sx = rand(-screenShake, screenShake);
+    const sy = rand(-screenShake, screenShake);
+    ctx.translate(Math.round(sx), Math.round(sy));
+    screenShake = Math.max(0, screenShake - 0.35);
+  }
   ctx.drawImage(bg, 0, 0);
   // 招牌燈泡
   const cols = ['#ffd23f', '#ff5fa2', '#3ff0ff'];
@@ -1011,7 +1052,18 @@ function render() {
   for (const p of prizes) if (p !== claw.held) drawPrize(p);
   if (claw.held) drawPrize(claw.held);
   drawClaw(geom);
-    if(save.buffs.radar && mode === 'move') text('▼', clawGeom().hx, FLOOR-5, '#ff3b3b', 10);
+  if (save.buffs.radar && mode === 'move') {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 60, 60, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(geom.hx, RAIL_Y + 10);
+    ctx.lineTo(geom.hx, FLOOR);
+    ctx.stroke();
+    ctx.restore();
+    text('▼', geom.hx, FLOOR - 5, '#ff3b3b', 10);
+  }
   // 擋板
   ctx.fillStyle = 'rgba(160,240,255,.35)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, GLASS_B - BARRIER_TOP);
   ctx.fillStyle = 'rgba(230,255,255,.9)'; ctx.fillRect(BARRIER_X - 1, BARRIER_TOP, 3, 1);
@@ -1040,11 +1092,17 @@ function render() {
     text('按投幣開始', W / 2, 138, '#f4f0ff', 11);
   }
   if (mode === 'move' && timer <= 5) text(String(Math.max(0, Math.ceil(timer))), W / 2, 72, Math.floor(t * 4) % 2 ? '#ff3b3b' : '#ffd23f', 16, 'center', 'PressStart');
+  ctx.restore();
 }
 
 /* ============ 介面 ============ */
 const fmt = n => n.toLocaleString('zh-TW');
 function updateUI() {
+  if ((save.tokens || 0) >= 1000) unlock('rich');
+  for (const [key, lvl] of Object.entries(save.upgrades || {})) {
+    if (lvl >= 3) unlock('upg_master');
+  }
+  if (save.visitedThemes && Object.keys(save.visitedThemes).length >= 4) unlock('theme_tour');
   $('#spent').textContent = fmt(save.spent);
   $('#tokens').textContent = fmt(save.tokens || 0);
   $('#plays').textContent = fmt(save.plays);
@@ -1241,6 +1299,8 @@ function openShop() {
         if (isUpg) {
           save.upgrades[it.key] = lvl + 1;
           toast(`⚙️ 升級成功！【${it.name}】達 Lv.${lvl + 1}`);
+          if (lvl + 1 >= 3) unlock('upg_master');
+          say(pick(LINES.upgrade));
         } else {
           save.buffs[id] = true;
           toast(`🧪 已購買【${it.name}】，下一局將自動生效！`);
@@ -1293,13 +1353,13 @@ function holdBtn(el, key) {
   el.addEventListener('contextmenu', e => e.preventDefault());
 }
 holdBtn($('#btnLeft'), 'tLeft'); holdBtn($('#btnRight'), 'tRight');
-$('#btnDrop').addEventListener('pointerdown', e => { e.preventDefault(); Sfx.ensure(); requestDrop(); });
-$('#btnCoin').addEventListener('click', insertCoin);
-$('#btnDex').addEventListener('click', openDex);
-$('#btnShop').addEventListener('click', openShop);
-$('#btnAch').addEventListener('click', openAch);
-$('#btnMute').addEventListener('click', toggleMute);
-$('#modalClose').addEventListener('click', closeModal);
+$('#btnDrop').addEventListener('pointerdown', e => { e.preventDefault(); Sfx.ensure(); Sfx.click(); requestDrop(); });
+$('#btnCoin').addEventListener('click', () => { Sfx.click(); insertCoin(); });
+$('#btnDex').addEventListener('click', () => { Sfx.click(); openDex(); });
+$('#btnShop').addEventListener('click', () => { Sfx.click(); openShop(); });
+$('#btnAch').addEventListener('click', () => { Sfx.click(); openAch(); });
+$('#btnMute').addEventListener('click', () => { Sfx.click(); toggleMute(); });
+$('#modalClose').addEventListener('click', () => { Sfx.click(); closeModal(); });
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.blur(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) Sfx.setMotor(false); });
@@ -1314,7 +1374,10 @@ function toggleSpeed() {
     btn.textContent = timeScale === 2 ? '⏩ 2X' : '▶ 1X';
     btn.classList.toggle('active', timeScale === 2);
   }
+  Sfx.ensure();
+  Sfx.speed(timeScale === 2);
   toast(timeScale === 2 ? '⚡ 已開啟 2 倍速！' : '▶ 已切換回正常速度 (1X)');
+  if (timeScale === 2) say(pick(LINES.speed));
 }
 $('#btnSpeed')?.addEventListener('click', toggleSpeed);
 
@@ -1370,11 +1433,14 @@ function refillMachine(themeId, isManualReset = false) {
 function changeTheme(themeId) {
   if (mode !== 'idle') return;
   save.theme = themeId;
+  save.visitedThemes = save.visitedThemes || {};
+  save.visitedThemes[themeId] = true;
+  if (Object.keys(save.visitedThemes).length >= 4) unlock('theme_tour');
   persist();
   refillMachine(themeId, false);
   const theme = THEMES[themeId] || THEMES.animal;
   toast(`🎰 已切換至【${theme.name}】！`);
-  say(`歡迎來到【${theme.name}】！這台娃娃不一樣喔～`);
+  say(pick(LINES.theme));
   Sfx.ensure(); Sfx.coin();
   updateUI();
 }
