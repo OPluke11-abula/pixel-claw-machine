@@ -1,6 +1,13 @@
 # 🕹️ PIXEL CLAW 像素夾娃娃機 v2.0
 
-> 純原生 HTML5 + Canvas 2D 手繪 8-Bit 像素風夾娃娃機 Web App。
+<p align="right">
+  🌐 <b>語言 / Language / 言語：</b>
+  <b>繁體中文</b> |
+  <a href="./README.en.md">English</a> |
+  <a href="./README.ja.md">日本語</a>
+</p>
+
+> 純原生 HTML5 + Canvas 2D 手繪 8-Bit 像素風夾娃娃機 Web App。  
 > 具備完整剛體物理引擎、天車單擺晃動、6 大 RPG 永久機台改裝、4 大主題機台、三層階梯難度與特殊物理娃娃！
 
 ---
