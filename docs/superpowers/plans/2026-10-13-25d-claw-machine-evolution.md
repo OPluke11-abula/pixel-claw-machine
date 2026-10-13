@@ -324,10 +324,10 @@ git commit -m "feat(2.5d): add full game loop with coins, pity, shop, dex, early
 - Modify: `SPEC.md`, `handoff.md`, `README.md`
 - Test: Playwright E2E 測試
 
-- [ ] **Step 1: 運行 Playwright 實機自動化操作驗收**
-- [ ] **Step 2: 擷取 2.5D 進化版高解析畫面快照**
-- [ ] **Step 3: 更新規格書與說明文件**
-- [ ] **Step 4: 提交 Commit 並推播至 GitHub**
+- [x] **Step 1: 運行 Playwright 實機自動化操作驗收**
+- [x] **Step 2: 擷取 2.5D 進化版高解析畫面快照**
+- [x] **Step 3: 更新規格書與說明文件**
+- [x] **Step 4: 提交 Commit 並推播至 GitHub**
 
 ```bash
 git add SPEC.md handoff.md README.md prototype_25d.html
