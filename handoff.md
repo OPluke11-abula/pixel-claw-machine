@@ -57,10 +57,22 @@
 5. **重整物理沉降過濾**：重整 (`refillMachine`) 生成時將娃娃高度控制於 $Y \ge FLOOR - 190$（擋板頂部 $Y = 207$ 之下），執行 600 步物理沉降並進行邊界過濾，確保開場與重整 0 漏球。
 
 ### 2.5 打擊感與視覺反饋 (Juiciness & Audio Polish)
-1. **螢幕微震 (Screen Shake)**：炸彈引爆時觸發 `screenShake = 6`，在 `render()` 繪圖循環中對畫布上下文應用隨機像素偏移 `ctx.translate(rand(-sx, sx), rand(-sy, sy))`，配合線性阻尼衰減，創造強烈打擊反饋。
-2. **Web Audio 合成音效擴充**：新增 `Sfx.boom()`（鋸齒波+方波快速雙重降頻爆炸聲）、`Sfx.speed()`（倍速升降音階）、`Sfx.click()`（按鍵微觸覺高頻音）。
+1. **螢幕微震 (Screen Shake)**：炸彈引爆或怪手抓取時觸發 `screenShake = 6`，在 `render()` 繪圖循環中對畫布上下文應用隨機像素偏移 `ctx.translate(rand(-sx, sx), rand(-sy, sy))`，配合線性阻尼衰減，創造強烈打擊反饋。
+2. **Web Audio 合成音效擴充**：新增 `Sfx.excavator()`（重工業油壓活塞 Sawtooth+Square 低頻衝擊）、`Sfx.boom()`（鋸齒波+方波快速雙重降頻爆炸聲）、`Sfx.speed()`（倍速升降音階）、`Sfx.click()`（按鍵微觸覺高頻音）。
 3. **光學雷達垂直瞄準線**：啟動雷達時自天車中心向地面繪製半透明紅色虛線雷射投影，提供精確下爪視覺輔助。
 4. **神爪金光粒子**：保夾或強爪狀態下，爪臂隨機噴發金色或青色火花粒子。
+
+### 2.6 巨型怪手鏟與多目標批次抓取機制 (Excavator Mega Scoop)
+當玩家夾出「神秘寶箱 (`chest`)」或在商店購買「怪手改造卷」時，將獲得傳說能力 `save.buffs.excavator = true`：
+1. **怪手形態幾何 (`clawGeom` isExcavator)**：
+   - 挖斗寬度達 $56\text{px}$（標準爪臂的 $2.5$ 倍），天車雙重鋼索、油壓頂針基座、黑黃斑馬紋防護罩與旋轉工程警示燈。
+   - 抓斗閉合時，合金鋼爪齒由兩側向中心閉合，形成完整物理包覆弧形斗。
+2. **範圍多目標偵測 (`findExcavatorTargets`)**：
+   - 於挖斗局部座標系偵測 $|l_x| < 28\text{px}$ 且 $l_y \in (0, 46\text{px})$ 內的所有娃娃，最多同時鏟入 7 隻娃娃入斗 (`claw.heldList = [...]`)。
+   - 為每隻被鏟起的娃娃計算斗內局部散佈偏移量 (`p.localOffX, p.localOffY`)，在天車平移回程時同步計算世界座標與剛體速度向量，平滑攜帶。
+3. **運送牢固與多目標連續釋放 (`release`)**：
+   - 怪手命運鎖定為 `round.fate = { hold: true }`，運送途中絕不脫落。
+   - 回到出貨洞口上方時，挖斗打開，`claw.heldList` 內的所有娃娃施加階梯微延遲加速度自然掉入洞口，連續觸發多次 `collect(p)`，實現滿載而歸的極致爽感！
 
 ---
 
@@ -68,13 +80,14 @@
 
 | 函式名稱 | 作用說明 | 關鍵關聯變數 / 邏輯 |
 |---|---|---|
-| `clawGeom()` | 計算爪子關節點世界座標與局部逆轉換 | 依據 `upgrades.size` 計算縮放因子 $S$ |
+| `clawGeom()` | 計算爪子關節點世界座標與局部逆轉換 | 支援標準爪縮放與 `isExcavator` 巨型挖斗幾何 |
+| `findExcavatorTargets(geom)` | 搜尋怪手挖斗空間內重疊的多隻娃娃 | 一次判定多達 7 隻娃娃裝入 `claw.heldList` |
 | `decideFate(p, lx)` | 決定該次抓取是成功持握或是半空脫落 | 依據重量、爪力、偏心率與升級加成計算機率 |
-| `refillMachine(themeId, isManual)` | 重新填充機台內 95 隻娃娃並沉降 | 分為底 (20)、中 (35)、頂 (40) 三層，冷卻 180s |
-| `changeTheme(themeId)` | 切換 4 大主題機台 | 刷新主題娃娃池與 `save.theme` |
+| `refillMachine(themeId, isManual)` | 重新填充機台內 95 隻娃娃並沉降 | 分為底 (20)、中 (35，含神秘寶箱)、頂 (40) 三層，冷卻 180s |
+| `changeTheme(themeId)` | 切換 4 大主題機台 | 獨立存檔防洗 bug，切換主題維持殘局現狀 |
 | `toggleSpeed()` | 切換 1X / 2X 倍速 | 改變 `timeScale`，調整 `acc += dt * timeScale` |
-| `openDex()` / `openShop()` | 開啟圖鑑櫃與 RPG 商店視窗 | 一鍵出售重複娃娃、升級 6 大改裝與購買道具 |
-| `updateUI()` | 畫面所有數據、按鈕狀態與冷卻即時刷新 | 每秒循環一次以驅動重整按鈕即時倒數計時 |
+| `openDex()` / `openShop()` | 開啟圖鑑櫃與 RPG 商店視窗 | 一鍵出售重複娃娃、升級 6 大改裝、購買怪手卷與道具 |
+| `updateUI()` | 畫面所有數據、按鈕狀態與冷卻即時刷新 | 每秒循環一次以驅動重整按鈕即時倒數計時與狀態徽章 |
 
 ---
 

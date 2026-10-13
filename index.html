@@ -337,6 +337,27 @@ const KINDS = [
   { id: 'magnet_doll', name: '引力星', rar: 1, w: 2.0, r: 12, magnetDoll: true,
     shape(p) { const P = '#8a2be2', S = '#da70d6'; p.ell(8, 8, 8, 8, P); p.ell(8, 8, 4, 4, S); },
     face(p) { p.px(7, 8, '#fff'); p.px(9, 8, '#fff'); } },
+  { id: 'chest', name: '神秘寶箱', rar: 1, w: 1.2, r: 12, chest: true,
+    shape(p) {
+      const W = '#8a3a14', G = '#ffd23f', D = '#522008', M = '#cfd6e6';
+      p.rect(2, 7, 12, 8, W);
+      p.rect(3, 13, 10, 1, D);
+      p.rect(3, 10, 10, 1, D);
+      p.rect(3, 3, 10, 4, W);
+      p.rect(4, 2, 8, 1, W);
+      p.rect(2, 3, 2, 12, G);
+      p.rect(12, 3, 2, 12, G);
+      p.rect(7, 3, 2, 12, G);
+      p.rect(2, 7, 12, 1, G);
+      p.rect(6, 7, 4, 3, M);
+      p.rect(7, 8, 2, 2, '#00e5ff');
+    },
+    face(p) {
+      p.px(5, 3, '#fff3a8');
+      p.px(10, 3, '#fff3a8');
+      p.px(7, 8, '#ffffff');
+    }
+  },
   { id: 'lucky', name: '金色招財貓', rar: 2, w: 2.8, r: 16,
     shape(p) { const G = '#ffd23f'; catEars(p, G); p.ell(8, 10, 6.6, 5.6, G); p.ell(13.6, 5.6, 1.8, 2.3, G); p.rect(4, 13, 8, 1, '#e8336b'); p.px(5, 6, '#fff3a8'); p.px(6, 6, '#fff3a8'); },
     face(p) { p.px(4, 9, OUT); p.px(5, 8, OUT); p.px(6, 9, OUT); p.px(9, 9, OUT); p.px(10, 8, OUT); p.px(11, 9, OUT); p.px(7, 11, OUT); p.px(8, 11, OUT); p.px(8, 14, '#e0a020'); p.px(7, 14, '#e0a020'); blush(p, 11); } },
@@ -360,28 +381,28 @@ const THEMES = {
     id: 'animal',
     name: '🧸 動物樂園機',
     top: ['bear', 'bunny', 'cat', 'frog', 'chick', 'penguin', 'bouncy_slime'],
-    mid: ['dino', 'octo', 'balloon', 'bomb'],
+    mid: ['dino', 'octo', 'balloon', 'bomb', 'chest'],
     bottom: ['lucky', 'mimic']
   },
   cute: {
     id: 'cute',
     name: '💖 可愛夢幻機',
     top: ['bunny', 'chick', 'cat', 'bouncy_slime'],
-    mid: ['ghost', 'balloon', 'bomb', 'slime'],
+    mid: ['ghost', 'balloon', 'bomb', 'slime', 'chest'],
     bottom: ['mimic', 'lucky']
   },
   mecha: {
     id: 'mecha',
     name: '⚙️ 鋼鐵機械機',
     top: ['penguin', 'cat', 'bear'],
-    mid: ['bomb', 'magnet_doll', 'dino'],
+    mid: ['bomb', 'magnet_doll', 'dino', 'chest'],
     bottom: ['anvil', 'robo_boss', 'mimic']
   },
   slime: {
     id: 'slime',
     name: '🧪 奇幻軟泥機',
     top: ['bouncy_slime', 'frog', 'chick'],
-    mid: ['slime', 'magnet_doll', 'balloon'],
+    mid: ['slime', 'magnet_doll', 'balloon', 'chest'],
     bottom: ['king_slime', 'anvil']
   }
 };
@@ -432,6 +453,11 @@ const Sfx = {
     else { this.tone(1047, .06, { to: 523, vol: .35 }); }
   },
   click() { this.tone(1100, .02, { vol: .15 }); },
+  excavator() {
+    this.tone(140, .2, { to: 60, type: 'sawtooth', vol: 0.9 });
+    this.tone(90, .35, { to: 40, type: 'square', vol: 0.8, when: .08 });
+    this.tone(180, .15, { to: 280, type: 'triangle', vol: 0.6, when: .2 });
+  },
   setMotor(on) {
     if (!this.ctx) return;
     if (on && !this.motor && !save.muted) {
@@ -502,7 +528,8 @@ const ACHS = [
   { id: 'oneshot', icon: '🎯', name: '一發入魂', desc: '第一次投幣就夾中' },
   { id: 'upg_master', icon: '🛠️', name: '改裝大師', desc: '任一機台改裝達到 Lv.3' },
   { id: 'theme_tour', icon: '🎰', name: '機台巡禮', desc: '體驗過全部 4 種主題機台' },
-  { id: 'rich', icon: '💰', name: '金幣大亨', desc: '持有金幣達到 1,000 🪙' }
+  { id: 'rich', icon: '💰', name: '金幣大亨', desc: '持有金幣達到 1,000 🪙' },
+  { id: 'excavator', icon: '🚜', name: '怪手神人', desc: '夾出寶箱並啟動巨型怪手狂鏟娃娃' }
 ];
 function unlock(id) {
   if (save.ach[id]) return;
@@ -522,7 +549,7 @@ ctx.imageSmoothingEnabled = false;
 
 let prizes = [], nextId = 1, screenShake = 0;
 let particles = [], popups = [], spawnQueue = [];
-const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, off: null, offTarget: null };
+const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, heldList: [], off: null, offTarget: null };
 let mode = 'idle', modeT = 0, timer = getRoundTime(), credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
 let round = null, dropRequested = false, booted = false;
 const input = { left: false, right: false, tLeft: false, tRight: false };
@@ -553,13 +580,37 @@ function clawGeom() {
   const toLocal = (x, y) => { const dx = x - hx, dy = y - hy; return { x: (dx * c - dy * s) / S, y: (dx * s + dy * c) / S }; };
   const a = 0.25 + 0.65 * claw.open, b = a - 1.1;
   const arms = [];
-  for (const side of [-1, 1]) {
-    const p0 = { x: side * 4, y: 8 };
-    const p1 = { x: p0.x + side * Math.sin(a) * 11, y: p0.y + Math.cos(a) * 11 };
-    const p2 = { x: p1.x + side * Math.sin(b) * 9, y: p1.y + Math.cos(b) * 9 };
-    arms.push([tf(p0.x, p0.y), tf(p1.x, p1.y), tf(p2.x, p2.y)]);
+  const isExcavator = round && round.excavator;
+  if (isExcavator) {
+    for (const side of [-1, 1]) {
+      const p0 = { x: side * 12, y: 8 };
+      const p1 = { x: p0.x + side * Math.sin(a) * 16, y: p0.y + Math.cos(a) * 15 };
+      const p2 = { x: p1.x + side * Math.sin(b) * 14, y: p1.y + Math.cos(b) * 13 };
+      arms.push([tf(p0.x, p0.y), tf(p1.x, p1.y), tf(p2.x, p2.y)]);
+    }
+    return { hx, hy, tf, toLocal, arms, box: [tf(-18, 4), tf(18, 4)], S, isExcavator: true };
+  } else {
+    for (const side of [-1, 1]) {
+      const p0 = { x: side * 4, y: 8 };
+      const p1 = { x: p0.x + side * Math.sin(a) * 11, y: p0.y + Math.cos(a) * 11 };
+      const p2 = { x: p1.x + side * Math.sin(b) * 9, y: p1.y + Math.cos(b) * 9 };
+      arms.push([tf(p0.x, p0.y), tf(p1.x, p1.y), tf(p2.x, p2.y)]);
+    }
+    return { hx, hy, tf, toLocal, arms, box: [tf(-5, 4), tf(5, 4)], S, isExcavator: false };
   }
-  return { hx, hy, tf, toLocal, arms, box: [tf(-5, 4), tf(5, 4)], S };
+}
+
+function findExcavatorTargets(geom) {
+  const scooped = [];
+  for (const p of prizes) {
+    if (p.held) continue;
+    const l = geom.toLocal(p.x, p.y);
+    if (Math.abs(l.x) < 28 && l.y > 0 && l.y < 46) {
+      scooped.push(p);
+      if (scooped.length >= 7) break;
+    }
+  }
+  return scooped;
 }
 
 /* 圓與線段碰撞：把圓推出去，回傳法向量 */
@@ -603,9 +654,28 @@ function startRound() {
   save.visitedThemes[save.theme || 'animal'] = true;
   if (Object.keys(save.visitedThemes).length >= 4) unlock('theme_tour');
   persist();
-  round = { guaranteed: save.armed, collected: 0, grabbed: false, fate: null, nearMiss: false, startLen: 0, startGx: 0 };
+  const isExcavator = !!(save.buffs && save.buffs.excavator);
+  round = {
+    guaranteed: save.armed,
+    collected: 0,
+    grabbed: false,
+    fate: null,
+    nearMiss: false,
+    startLen: 0,
+    startGx: 0,
+    excavator: isExcavator
+  };
+  if (isExcavator) {
+    save.buffs.excavator = false;
+    toast('🚜【巨型怪手出動】超大挖斗已就緒！瞄準娃娃堆，一鏟一網打盡！', true);
+    Sfx.boom();
+    screenShake = 6;
+    say('怪手來了！看準那一整堆，直接給它鏟下去！');
+  }
   timer = getRoundTime(); lastBeep = 0; dropRequested = false;
   claw.open = 1;
+  claw.heldList = [];
+  claw.held = null;
   setMode('move'); updateUI();
 }
 
@@ -673,17 +743,21 @@ function saveCurrentMachine() {
 }
 
 function dropHeld() {
-  const p = claw.held; if (!p) return;
-  p.held = false; p.dropped = true; p.noArm = 0.35;
-  p.vx = claw.vx + rand(-15, 15); p.vy = claw.vy;
+  const list = (claw.heldList && claw.heldList.length > 0) ? claw.heldList : (claw.held ? [claw.held] : []);
+  if (list.length === 0) return;
+  for (const p of list) {
+    p.held = false; p.dropped = true; p.noArm = 0.35;
+    p.vx = claw.vx + rand(-15, 15); p.vy = claw.vy;
+    popups.push({ text: '啊！', x: p.x, y: p.y - 12, life: 1, col: '#ff6b6b' });
+  }
+  claw.heldList = [];
   claw.held = null; claw.open = 0.8;
   if (mode === 'back' && claw.gx < HOME_X + 60) round.nearMiss = true;
   Sfx.slip();
-  popups.push({ text: '啊！', x: p.x, y: p.y - 12, life: 1, col: '#ff6b6b' });
 }
 
 function endRound() {
-  save.buffs = {};
+  save.buffs = save.buffs || {};
   if (round.collected === 0) {
     save.streak++;
     if (round.guaranteed && !round.grabbed) say(pick(LINES.pityMiss));
@@ -722,7 +796,13 @@ function collect(p) {
   if (k.rar === 2) unlock('legend');
   if (!p.carried && !p.dropped) unlock('push');
   if (KINDS.every(kk => save.coll[kk.id])) unlock('full');
-  if (k.rar === 2) Sfx.legend(); else Sfx.win();
+  if (k.chest || k.jackpot) {
+    save.buffs.excavator = true;
+    toast('🎁【開啟神秘寶箱】獲得傳說能力：下一把變形為【🚜 巨型怪手鏟】！一次鏟一堆娃娃！', true);
+    Sfx.legend();
+    say('哇靠！寶箱被你夾出來了！下一把怪手出動，整台娃娃都要被你鏟光了！');
+    unlock('excavator');
+  } else if (k.rar === 2) Sfx.legend(); else Sfx.win();
   toast(`獲得 ${k.name}（${RARITY[k.rar].name}）！`);
   popups.push({ text: `GET! ${k.name}`, x: 92, y: 236, life: 1.8, col: RARITY[k.rar].color });
   for (let i = 0; i < 40; i++) particles.push({ x: rand(14, 54), y: 450, vx: rand(-60, 90), vy: rand(-220, -90), life: rand(.8, 1.6), col: pick(['#ff5fa2', '#ffd23f', '#3ff0ff', '#5dff7a', '#c08bff']) });
@@ -778,23 +858,73 @@ function step(dt) {
           }
         }
         let hit = claw.len >= getMaxLen() || Math.max(geom.arms[0][2].y, geom.arms[1][2].y) >= FLOOR - 1;
-      if (!hit && modeT > 0.15) for (const p of prizes) {
-        const l = geom.toLocal(p.x, p.y);
-        const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
-        if (l.y > 4 && bd < (p.r || 8) / geom.S + 4.5) { hit = true; break; }
-        if (Math.hypot(p.vx, p.vy) < 40) for (const arm of geom.arms) for (let i = 0; i < 2; i++) {
-          const r = segPush(p, arm[i].x, arm[i].y, arm[i + 1].x, arm[i + 1].y, 1.5, 0, 0, false);
-          if (r && r.ny > 0.6 && r.pen > 1.2) hit = true;
+      if (!hit && modeT > 0.15) {
+        if (round && round.excavator) {
+          for (const p of prizes) {
+            const l = geom.toLocal(p.x, p.y);
+            if (l.y > 0 && l.y < 38 && Math.abs(l.x) < 24) { hit = true; break; }
+          }
+        } else {
+          for (const p of prizes) {
+            const l = geom.toLocal(p.x, p.y);
+            const bd = Math.abs(l.x) <= 5 ? Math.abs(l.y - 4) : Math.hypot(Math.abs(l.x) - 5, l.y - 4);
+            if (l.y > 4 && bd < (p.r || 8) / geom.S + 4.5) { hit = true; break; }
+            if (Math.hypot(p.vx, p.vy) < 40) for (const arm of geom.arms) for (let i = 0; i < 2; i++) {
+              const r = segPush(p, arm[i].x, arm[i].y, arm[i + 1].x, arm[i + 1].y, 1.5, 0, 0, false);
+              if (r && r.ny > 0.6 && r.pen > 1.2) hit = true;
+            }
+            if (hit) break;
+          }
         }
-        if (hit) break;
       }
-      if (hit) { round.startLen = claw.len; round.target = findTarget(geom); setMode('close'); Sfx.grab(); }
+      if (hit) {
+        round.startLen = claw.len;
+        if (round && round.excavator) {
+          setMode('close');
+          Sfx.excavator();
+          screenShake = 5;
+        } else {
+          round.target = findTarget(geom);
+          setMode('close');
+          Sfx.grab();
+        }
+      }
       break;
     }
     case 'close': {
       if (modeT < 0.15) break;
       const before = claw.open;
       claw.open = Math.max(0, claw.open - dt / 0.7);
+      if (round && round.excavator) {
+        if (claw.open <= 0.45 && (!claw.heldList || claw.heldList.length === 0)) {
+          geom = clawGeom();
+          const scooped = findExcavatorTargets(geom);
+          claw.heldList = scooped;
+          if (scooped.length > 0) {
+            claw.held = scooped[0];
+            round.grabbed = true;
+            round.fate = { hold: true };
+            scooped.forEach((p, idx) => {
+              p.held = true;
+              const l = geom.toLocal(p.x, p.y);
+              p.localOffX = Math.max(-18, Math.min(18, l.x));
+              p.localOffY = Math.max(12, Math.min(32, l.y));
+            });
+            claw.off = { x: 0, y: 20 };
+            claw.offTarget = { x: 0, y: 20 };
+            claw.open = 0;
+            Sfx.boom();
+            screenShake = 6;
+            toast(`🚜【怪手狂鏟】一網打盡！鏟起 ${scooped.length} 隻娃娃！`, true);
+            say(`狂！怪手直接整窩端走，這把 ${scooped.length} 隻大豐收！`);
+            for (let i = 0; i < 25; i++) {
+              particles.push({ x: geom.hx + rand(-18, 18), y: geom.hy + rand(10, 24), vx: rand(-60, 60), vy: rand(-80, 20), life: 0.5, col: '#ffd23f', spark: true });
+            }
+          }
+        }
+        if (modeT > 0.8) setMode('up');
+        break;
+      }
       if (before > HOLD_OPEN && claw.open <= HOLD_OPEN && !claw.held) {
         geom = clawGeom();
         const best = round.target && prizes.includes(round.target) && inGrip(geom, round.target) ? round.target : findTarget(geom);
@@ -838,9 +968,19 @@ function step(dt) {
     case 'release':
       if (modeT > 0.25) {
         claw.open = Math.min(1, claw.open + dt / 0.3);
-        if (claw.held && claw.open > 0.65) { const p = claw.held; p.held = false; p.carried = true; p.vx = 0; p.vy = 20; claw.held = null; }
+        const list = (claw.heldList && claw.heldList.length > 0) ? claw.heldList : (claw.held ? [claw.held] : []);
+        if (list.length > 0 && claw.open > 0.45) {
+          list.forEach((p, idx) => {
+            p.held = false;
+            p.carried = true;
+            p.vx = rand(-12, 12);
+            p.vy = 20 + idx * 8;
+          });
+          claw.heldList = [];
+          claw.held = null;
+        }
       }
-      if (modeT > 1.4) setMode('settle');
+      if (modeT > 1.8) setMode('settle');
       break;
     case 'settle': {
       let maxV = 0; for (const p of prizes) maxV = Math.max(maxV, Math.abs(p.vx) + Math.abs(p.vy));
@@ -856,12 +996,17 @@ function step(dt) {
   geom = clawGeom();
   claw.vx = (geom.hx - claw.px) / dt; claw.vy = (geom.hy - claw.py) / dt;
   claw.px = geom.hx; claw.py = geom.hy;
-  if (claw.held) {
+  const heldItems = (claw.heldList && claw.heldList.length > 0) ? claw.heldList : (claw.held ? [claw.held] : []);
+  if (heldItems.length > 0) {
     const k = Math.min(1, 5 * dt);
     claw.off.x += (claw.offTarget.x - claw.off.x) * k; claw.off.y += (claw.offTarget.y - claw.off.y) * k;
-    const pos = geom.tf(claw.off.x, claw.off.y);
-    claw.held.vx = (pos.x - claw.held.x) / dt; claw.held.vy = (pos.y - claw.held.y) / dt;
-    claw.held.x = pos.x; claw.held.y = pos.y;
+    for (const p of heldItems) {
+      const ox = claw.off.x + (p.localOffX !== undefined ? p.localOffX : 0);
+      const oy = claw.off.y + (p.localOffY !== undefined ? p.localOffY : 0);
+      const pos = geom.tf(ox, oy);
+      p.vx = (pos.x - p.x) / dt; p.vy = (pos.y - p.y) / dt;
+      p.x = pos.x; p.y = pos.y;
+    }
   }
 
   /* 補貨 */
@@ -974,8 +1119,14 @@ function step(dt) {
   particles = particles.filter(q => q.life > 0);
   for (const q of popups) { q.y -= 14 * dt; q.life -= dt; }
   popups = popups.filter(q => q.life > 0);
-  for (const p of prizes) if (KINDS[p.kind].rar === 2 && Math.random() < dt * 2.5)
-    particles.push({ x: p.x + rand(-9, 9), y: p.y + rand(-9, 9), vx: 0, vy: -10, life: .5, col: '#fff3a8', g: 0, spark: true });
+  for (const p of prizes) {
+    if (KINDS[p.kind].rar === 2 && Math.random() < dt * 2.5) {
+      particles.push({ x: p.x + rand(-9, 9), y: p.y + rand(-9, 9), vx: 0, vy: -10, life: .5, col: '#fff3a8', g: 0, spark: true });
+    }
+    if (KINDS[p.kind].chest && Math.random() < dt * 3.5) {
+      particles.push({ x: p.x + rand(-8, 8), y: p.y + rand(-8, 8), vx: rand(-4, 4), vy: rand(-14, -4), life: .45, col: pick(['#ffd23f', '#00e5ff', '#ffffff']), spark: true });
+    }
+  }
 }
 
 /* ============ 繪圖 ============ */
@@ -1045,28 +1196,96 @@ function drawClaw(geom) {
   ctx.fillStyle = '#0d0820'; ctx.fillRect(gx - 8, RAIL_Y - 9, 16, 9);
   ctx.fillStyle = '#ffd23f'; ctx.fillRect(gx - 7, RAIL_Y - 8, 14, 7);
   ctx.fillStyle = '#e0a020'; ctx.fillRect(gx - 7, RAIL_Y - 3, 14, 2);
-  // 繩子
-  pline(claw.gx, RAIL_Y, geom.hx, geom.hy, '#cfd6e6', 1);
-  // 爪臂
-  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, OUT, 4 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, OUT, 4 * geom.S); }
-  for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#c9d2e6', 2 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#c9d2e6', 2 * geom.S); }
-  // 馬達盒
-    const hx = Math.round(geom.hx), hy = Math.round(geom.hy);
-    const S = geom.S;
+
+  const isEx = geom.isExcavator;
+  const hx = Math.round(geom.hx), hy = Math.round(geom.hy);
+  const S = geom.S;
+
+  if (isEx) {
+    // 巨型重工鋼索 (雙鋼纜)
+    pline(claw.gx - 3, RAIL_Y, hx - 3, hy - 4, '#333842', 2);
+    pline(claw.gx + 3, RAIL_Y, hx + 3, hy - 4, '#ffd23f', 2);
+    pline(claw.gx, RAIL_Y, hx, hy - 4, '#cfd6e6', 1);
+
+    // 挖斗背面連桿與骨架
+    pline(geom.arms[0][1].x, geom.arms[0][1].y, geom.arms[1][1].x, geom.arms[1][1].y, '#1e222d', 5 * S);
+    pline(geom.arms[0][1].x, geom.arms[0][1].y, geom.arms[1][1].x, geom.arms[1][1].y, '#ffd23f', 2 * S);
+
+    // 怪手挖斗兩側厚刃與鋸齒
+    for (const arm of geom.arms) {
+      pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#111318', 6 * S);
+      pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#111318', 6 * S);
+    }
+    for (const arm of geom.arms) {
+      // 挖斗主體 CAT 工業黃
+      pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#ffd23f', 3.5 * S);
+      pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#ffaa00', 3.5 * S);
+      // 鋼製挖齒 (尖端高光)
+      pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#ffffff', 1.2 * S);
+    }
+    // 挖斗前端合金鋼牙 (齒峰)
+    for (const arm of geom.arms) {
+      const tip = arm[2];
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(Math.round(tip.x - 2 * S), Math.round(tip.y - 2 * S), Math.round(4 * S), Math.round(4 * S));
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillRect(Math.round(tip.x - 1 * S), Math.round(tip.y - 1 * S), Math.round(2 * S), Math.round(2 * S));
+    }
+
+    // 重型油壓馬達基座
+    const bw = Math.round(36 * S), bh = Math.round(15 * S);
+    ctx.fillStyle = '#0a0d14'; ctx.fillRect(Math.round(hx - bw / 2), Math.round(hy - 4 * S), bw, bh);
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(hx - bw / 2 + 2), Math.round(hy - 3 * S), bw - 4, bh - 3);
+    // 工業黑黃斑馬斜紋
+    ctx.fillStyle = '#1b1b1b';
+    for (let bx = Math.round(hx - bw / 2 + 4); bx < hx + bw / 2 - 4; bx += 7) {
+      ctx.fillRect(bx, Math.round(hy - 3 * S), 3, bh - 3);
+    }
+    // 油壓頂針與加強銘板
+    ctx.fillStyle = '#8f9bb8'; ctx.fillRect(Math.round(hx - 4 * S), Math.round(hy - 6 * S), Math.round(8 * S), Math.round(4 * S));
+    ctx.fillStyle = '#cfd6e6'; ctx.fillRect(Math.round(hx - 2 * S), Math.round(hy - 6 * S), Math.round(4 * S), Math.round(2 * S));
+
+    // 旋轉工程警示燈 (亮橘 / 金黃交替閃爍)
+    const flashCol = Math.floor(performance.now() / 120) % 2 ? '#ff4d00' : '#ffd23f';
+    ctx.fillStyle = '#0a0d14'; ctx.fillRect(hx - 3, hy - 9 * S, 6, 4 * S);
+    ctx.fillStyle = flashCol; ctx.fillRect(hx - 2, hy - 8 * S, 4, 3 * S);
+
+    // 怪手作業火花與油壓蒸汽
+    if (mode === 'down' || mode === 'close' || (claw.heldList && claw.heldList.length > 0)) {
+      if (Math.random() < 0.45) {
+        particles.push({
+          x: hx + rand(-16, 16),
+          y: hy + rand(4, 20),
+          vx: rand(-30, 30),
+          vy: rand(-40, 20),
+          life: 0.35,
+          col: pick(['#ffd23f', '#ff7700', '#ffffff']),
+          spark: true
+        });
+      }
+    }
+  } else {
+    // 繩子
+    pline(claw.gx, RAIL_Y, geom.hx, geom.hy, '#cfd6e6', 1);
+    // 爪臂
+    for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, OUT, 4 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, OUT, 4 * geom.S); }
+    for (const arm of geom.arms) { pline(arm[0].x, arm[0].y, arm[1].x, arm[1].y, '#c9d2e6', 2 * geom.S); pline(arm[1].x, arm[1].y, arm[2].x, arm[2].y, '#c9d2e6', 2 * geom.S); }
+    // 馬達盒
     ctx.fillStyle = OUT; ctx.fillRect(hx - 7*S, hy - 2*S, 14*S, 11*S);
     ctx.fillStyle = '#9aa6c4'; ctx.fillRect(hx - 6*S, hy - 1*S, 12*S, 9*S);
     ctx.fillStyle = '#c9d2e6'; ctx.fillRect(hx - 6*S, hy - 1*S, 12*S, 2*S);
-  ctx.fillStyle = round && round.guaranteed && mode !== 'idle' ? (Math.floor(performance.now() / 150) % 2 ? '#ffd23f' : '#ff3b3b') : '#ff3b3b';
-  ctx.fillRect(hx - 1, hy + 3, 2, 2);
+    ctx.fillStyle = round && round.guaranteed && mode !== 'idle' ? (Math.floor(performance.now() / 150) % 2 ? '#ffd23f' : '#ff3b3b') : '#ff3b3b';
+    ctx.fillRect(hx - 1, hy + 3, 2, 2);
 
-  // 神爪 / 保夾金色或青色光暈粒子
-  const isBuffed = (round && round.guaranteed) || save.armed || (save.buffs && save.buffs.strong);
-  if (isBuffed && mode !== 'idle') {
-    const glowCol = (round && round.guaranteed) || save.armed ? '#ffd23f' : '#38b6ff';
-    if (Math.random() < 0.4) {
-      const arm = pick(geom.arms);
-      const pt = pick(arm);
-      particles.push({ x: pt.x + rand(-3, 3), y: pt.y + rand(-3, 3), vx: rand(-10, 10), vy: rand(-15, 5), life: 0.35, col: glowCol, spark: true });
+    // 神爪 / 保夾金色或青色光暈粒子
+    const isBuffed = (round && round.guaranteed) || save.armed || (save.buffs && save.buffs.strong);
+    if (isBuffed && mode !== 'idle') {
+      const glowCol = (round && round.guaranteed) || save.armed ? '#ffd23f' : '#38b6ff';
+      if (Math.random() < 0.4) {
+        const arm = pick(geom.arms);
+        const pt = pick(arm);
+        particles.push({ x: pt.x + rand(-3, 3), y: pt.y + rand(-3, 3), vx: rand(-10, 10), vy: rand(-15, 5), life: 0.35, col: glowCol, spark: true });
+      }
     }
   }
 }
@@ -1089,8 +1308,9 @@ function render() {
   // 洞口提示
   if (Math.floor(t * 2) % 2) text('▼出口', (GLASS_L + BARRIER_X) / 2, BARRIER_TOP - 10, '#ffd23f', 11);
   const geom = clawGeom();
-  for (const p of prizes) if (p !== claw.held) drawPrize(p);
-  if (claw.held) drawPrize(claw.held);
+  const heldItems = (claw.heldList && claw.heldList.length > 0) ? claw.heldList : (claw.held ? [claw.held] : []);
+  for (const p of prizes) if (!heldItems.includes(p)) drawPrize(p);
+  for (const p of heldItems) drawPrize(p);
   drawClaw(geom);
   if (save.buffs.radar && mode === 'move') {
     ctx.save();
@@ -1164,6 +1384,7 @@ function updateUI() {
     if (save.buffs.strong) badges.push('<span class="badge-item buff">💪 強爪(生效中)</span>');
     if (save.buffs.radar) badges.push('<span class="badge-item buff">🎯 雷達(生效中)</span>');
     if (save.buffs.magnet) badges.push('<span class="badge-item buff">🧲 磁鐵(生效中)</span>');
+    if (save.buffs.excavator) badges.push('<span class="badge-item buff" style="background:#5a3e00;color:#ffd23f;border-color:#ffd23f">🚜 怪手(已備妥)</span>');
 
     const upgNames = {
       rope: { icon: '🧵', name: '加長繩索' },
@@ -1288,7 +1509,8 @@ function openShop() {
   const buffItems = [
     { id: 'strong', name: '強爪藥水', desc: '下一局爪力提升至 100%（不會滑落）', cost: 120, icon: '💪' },
     { id: 'radar', name: '精準雷達', desc: '下一局會顯示下爪預測落點', cost: 40, icon: '🎯' },
-    { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附周圍娃娃', cost: 80, icon: '🧲' }
+    { id: 'magnet', name: '磁鐵爪', desc: '下一局爪子下降時會微幅吸附周圍娃娃', cost: 80, icon: '🧲' },
+    { id: 'excavator', name: '怪手改造卷', desc: '下一局爪子變形為【🚜 巨型怪手鏟】，大挖斗一次狂鏟一堆娃娃', cost: 350, icon: '🚜' }
   ];
   const upgradeItems = [
     { id: 'upg_rope', name: '加長繩索', desc: '永久增加爪子下放的最大深度（必備）', cost: 120 * ((save.upgrades.rope || 0) + 1), icon: '🧵', isUpg: true, key: 'rope', max: 3 },
@@ -1436,9 +1658,9 @@ function refillMachine(themeId, isManualReset = false) {
     const y = FLOOR - 65 + Math.floor(i / 6) * 15 + rand(-2, 2);
     addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
-  // 中部（35隻）：特殊功能中型娃娃 (r=11~12)
+  // 中部（35隻）：特殊功能中型娃娃 (r=11~12)，保證至少 3 隻神秘寶箱
   for (let i = 0; i < 35; i++) {
-    const id = pick(theme.mid);
+    const id = i < 3 ? 'chest' : pick(theme.mid);
     const kIdx = KINDS.findIndex(k => k.id === id);
     const x = 80 + (i % 8) * 19 + rand(-3, 3);
     const y = FLOOR - 130 + Math.floor(i / 8) * 16 + rand(-2, 2);
@@ -1539,6 +1761,14 @@ if (save.machines[save.theme] && save.machines[save.theme].length > 0) {
   prizes = deserializePrizes(save.machines[save.theme]);
 } else {
   refillMachine(save.theme || 'animal', false);
+}
+// 確保當前機台內有神秘寶箱（若舊存檔中未曾生成寶箱，主動在頂層與中層補入 2 隻寶箱）
+const chestIdx = KINDS.findIndex(k => k.id === 'chest');
+if (chestIdx >= 0 && !prizes.some(p => p.kind === chestIdx)) {
+  addPrize(120, FLOOR - 110, chestIdx);
+  addPrize(175, FLOOR - 90, chestIdx);
+  save.machines[save.theme] = serializePrizes(prizes);
+  persist();
 }
 particles = []; mode = 'idle'; modeT = 0; booted = true;
 claw.px = clawGeom().hx; claw.py = clawGeom().hy;
