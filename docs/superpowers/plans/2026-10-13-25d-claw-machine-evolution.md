@@ -116,7 +116,7 @@ git commit -m "feat(2.5d): implement 3D rigid-body stack physics and collision e
 - Consumes: 天車世界座標 $(C_x, C_y, C_z)$，娃娃陣列 `prizes`
 - Produces: `getUnderSurfaceHeight(cx, cz)` 回傳最高表面高度 $Y_{\text{surface}}$，並將陰影精確投射於該高度。
 
-- [ ] **Step 1: 編寫高度自適應陰影測試腳本**
+- [x] **Step 1: 編寫高度自適應陰影測試腳本**
 
 ```javascript
 // scratch/test_25d_shadow.js
@@ -149,24 +149,24 @@ if (hDoll < target.y) throw new Error(`Expected shadow height >= ${target.y}, go
 console.log('✅ Height-Adaptive Shadow Projection Test Passed!');
 ```
 
-- [ ] **Step 2: 執行測試確認初始狀態失敗**
+- [x] **Step 2: 執行測試確認初始狀態失敗**
 
 Run: `node scratch/test_25d_shadow.js`
 Expected: FAIL（因 `P.getUnderSurfaceHeight` 尚未實作）
 
-- [ ] **Step 3: 實作 `getUnderSurfaceHeight(cx, cz)` 與動態陰影渲染**
+- [x] **Step 3: 實作 `getUnderSurfaceHeight(cx, cz)` 與動態陰影渲染**
 
 1. 計算爪子覆蓋區域圓錐半徑 $R_{\text{aim}} = 12$。
 2. 搜尋垂直投影範圍內最高物體表面 $Y_{\text{surface}} = \max_{p}(p.y + p.r)$。
 3. 陰影貼合於 $\text{project}(C_x, Y_{\text{surface}}, C_z)$，陰影尺寸隨 $Y_{\text{surface}}$ 縮放。
 4. 繪製由天車頂直通 $Y_{\text{surface}}$ 的垂直紅色雷射虛線。
 
-- [ ] **Step 4: 執行測試驗證通過**
+- [x] **Step 4: 執行測試驗證通過**
 
 Run: `node scratch/test_25d_shadow.js`
 Expected: PASS（輸出 `✅ Height-Adaptive Shadow Projection Test Passed!`）
 
-- [ ] **Step 5: 提交 Commit**
+- [x] **Step 5: 提交 Commit**
 
 ```bash
 git add prototype_25d.html scratch/test_25d_shadow.js
