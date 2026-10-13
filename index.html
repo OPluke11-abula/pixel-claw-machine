@@ -244,7 +244,7 @@ const OUT = '#1b1030', PINK = '#ff7aa8';
 
 /* ============ 存檔 ============ */
 const SAVE_KEY = 'pixel-claw-save-v1';
-const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0, visitedThemes: { animal: true }, machines: {} });
+const defSave = () => ({ spent: 0, plays: 0, wins: 0, pity: 0, armed: false, streak: 0, combo: 0, coll: {}, ach: {}, muted: false, visited: false, tokens: 0, buffs: {}, upgrades: { rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, theme: 'animal', lastRefill: 0, visitedThemes: { animal: true }, machines: {} });
 let save = defSave();
 try {
   const raw = localStorage.getItem(SAVE_KEY);
@@ -254,6 +254,7 @@ try {
     save.upgrades = Object.assign({ rope: 0, str: 0, time: 0, speed: 0, size: 0, luck: 0 }, loaded.upgrades || {});
     save.buffs = loaded.buffs || {};
     save.theme = loaded.theme || 'animal';
+    save.combo = loaded.combo || 0;
     save.lastRefill = loaded.lastRefill || 0;
     save.visitedThemes = Object.assign({ animal: true }, loaded.visitedThemes || {});
     if (save.theme) save.visitedThemes[save.theme] = true;
@@ -375,7 +376,25 @@ const KINDS = [
     face(p) { eyes(p, 6, 10, 10); blush(p, 11, 4, 11); p.rect(7, 12, 2, 1, '#1c1236'); } },
   { id: 'robo_boss', name: '鋼鐵巨神', rar: 2, w: 3.8, r: 17,
     shape(p) { const M = '#8892b0', D = '#4c566a'; p.rect(2, 2, 12, 12, M); p.rect(1, 4, 14, 8, D); p.rect(4, 0, 8, 2, '#ff5fa2'); },
-    face(p) { p.rect(4, 7, 8, 2, '#3ff0ff'); p.px(7, 8, '#fff'); p.px(8, 8, '#fff'); p.rect(5, 11, 6, 1, '#2e3440'); } }
+    face(p) { p.rect(4, 7, 8, 2, '#3ff0ff'); p.px(7, 8, '#fff'); p.px(8, 8, '#fff'); p.rect(5, 11, 6, 1, '#2e3440'); } },
+  { id: 'money_bag', name: '彩虹金幣福袋', rar: 1, w: 1.5, r: 11, jackpotBag: true,
+    shape(p) {
+      const R = '#e8336b', G = '#ffd23f', D = '#9e1a46';
+      p.ell(8, 10.5, 6.2, 5.2, R);
+      p.rect(5, 4, 6, 3, D);
+      p.rect(4, 3, 8, 2, R);
+      p.rect(6, 6, 4, 1, G);
+      p.px(5, 6, G); p.px(10, 6, G);
+      p.ell(8, 10.5, 2.5, 2.5, G);
+    },
+    face(p) {
+      p.px(8, 10, '#b01e4f');
+      p.px(7, 10, '#b01e4f');
+      p.px(8, 9, '#b01e4f');
+      p.px(8, 11, '#b01e4f');
+      blush(p, 11, 4, 12);
+    }
+  }
 ];
 KINDS.forEach(k => { k.sprite = buildSprite(k.shape, k.face, k); });
 
@@ -384,28 +403,28 @@ const THEMES = {
     id: 'animal',
     name: '🧸 動物樂園機',
     top: ['bear', 'bunny', 'cat', 'frog', 'chick', 'penguin', 'bouncy_slime'],
-    mid: ['dino', 'octo', 'balloon', 'bomb', 'chest'],
+    mid: ['dino', 'octo', 'balloon', 'bomb', 'chest', 'money_bag'],
     bottom: ['lucky', 'mimic']
   },
   cute: {
     id: 'cute',
     name: '💖 可愛夢幻機',
     top: ['bunny', 'chick', 'cat', 'bouncy_slime'],
-    mid: ['ghost', 'balloon', 'bomb', 'slime', 'chest'],
+    mid: ['ghost', 'balloon', 'bomb', 'slime', 'chest', 'money_bag'],
     bottom: ['mimic', 'lucky']
   },
   mecha: {
     id: 'mecha',
     name: '⚙️ 鋼鐵機械機',
     top: ['penguin', 'cat', 'bear'],
-    mid: ['bomb', 'magnet_doll', 'dino', 'chest'],
+    mid: ['bomb', 'magnet_doll', 'dino', 'chest', 'money_bag'],
     bottom: ['anvil', 'robo_boss', 'mimic']
   },
   slime: {
     id: 'slime',
     name: '🧪 奇幻軟泥機',
     top: ['bouncy_slime', 'frog', 'chick'],
-    mid: ['slime', 'magnet_doll', 'balloon', 'chest'],
+    mid: ['slime', 'magnet_doll', 'balloon', 'chest', 'money_bag'],
     bottom: ['king_slime', 'anvil']
   }
 };
@@ -496,7 +515,9 @@ const LINES = {
   full: ['一次最多先投 9 枚啦，夾完再投～'],
   theme: ['換這台試試？這台的娃娃更頂喔！', '鋼鐵機械機很硬喔，爪子不夠大別輕易下爪！', '軟泥機彈性很好，小心噴出來！', '可愛機是妹子最愛，夾一隻送人吧！'],
   speed: ['衝那麼快！看準再按啊！', '加速模式開啟！手速跟得上嗎？', '兩倍速？年輕人就是沉不住氣！'],
-  upgrade: ['不錯喔，捨得花錢改機台了！', '升級了齁？台主開始緊張了…', '改裝完這台變神器了吧！']
+  upgrade: ['不錯喔，捨得花錢改機台了！', '升級了齁？台主開始緊張了…', '改裝完這台變神器了吧！'],
+  earlyClose: ['看準提前合爪！內行的喔！', '二段合爪！手速可以啊！', '空中攔截！有玩過街機喔？'],
+  fever: ['連續命中！！FEVER TIME 狂熱模式！', '太狂了！連夾連中，金幣狂飆！', '擋不住啦！這手感簡直開外掛！']
 };
 const MILESTONES = [
   [100, '你已經花掉一個便當的錢了喔。'],
@@ -532,7 +553,9 @@ const ACHS = [
   { id: 'upg_master', icon: '🛠️', name: '改裝大師', desc: '任一機台改裝達到 Lv.3' },
   { id: 'theme_tour', icon: '🎰', name: '機台巡禮', desc: '體驗過全部 4 種主題機台' },
   { id: 'rich', icon: '💰', name: '金幣大亨', desc: '持有金幣達到 1,000 🪙' },
-  { id: 'excavator', icon: '🚜', name: '怪手神人', desc: '夾出寶箱並啟動巨型怪手狂鏟娃娃' }
+  { id: 'excavator', icon: '🚜', name: '怪手神人', desc: '夾出寶箱並啟動巨型怪手狂鏟娃娃' },
+  { id: 'fever_master', icon: '🔥', name: '狂熱連中', desc: '連續 2 次以上夾中娃娃進入 FEVER 狂熱模式' },
+  { id: 'lucky_bag', icon: '💰', name: '福袋大富翁', desc: '夾出彩虹金幣福袋並收穫大量金幣' }
 ];
 function unlock(id) {
   if (save.ach[id]) return;
@@ -554,7 +577,7 @@ let prizes = [], nextId = 1, screenShake = 0;
 let particles = [], popups = [], spawnQueue = [];
 const claw = { gx: HOME_X, gv: 0, len: REST_LEN, theta: 0, omega: 0, open: 1, vx: 0, vy: 0, px: 0, py: 0, held: null, heldList: [], off: null, offTarget: null };
 let mode = 'idle', modeT = 0, timer = getRoundTime(), credits = 0, autoStartT = 0, idleT = 0, lastBeep = 0;
-let round = null, dropRequested = false, booted = false;
+let round = null, dropRequested = false, earlyCloseRequested = false, booted = false;
 const input = { left: false, right: false, tLeft: false, tRight: false };
 
 function rollKind() {
@@ -634,7 +657,7 @@ function segPush(p, ax, ay, bx, by, rad, vx = 0, vy = 0, apply = true) {
 }
 
 /* ============ 回合流程 ============ */
-function setMode(m) { mode = m; modeT = 0; }
+function setMode(m) { mode = m; modeT = 0; updateUI(); }
 
 function insertCoin() {
   Sfx.ensure();
@@ -675,14 +698,17 @@ function startRound() {
     screenShake = 6;
     say('怪手來了！看準那一整堆，直接給它鏟下去！');
   }
-  timer = getRoundTime(); lastBeep = 0; dropRequested = false;
+  timer = getRoundTime(); lastBeep = 0; dropRequested = false; earlyCloseRequested = false;
   claw.open = 1;
   claw.heldList = [];
   claw.held = null;
   setMode('move'); updateUI();
 }
 
-function requestDrop() { if (mode === 'move' && modeT > 0.2) dropRequested = true; }
+function requestDrop() {
+  if (mode === 'move' && modeT > 0.2) dropRequested = true;
+  else if (mode === 'down' && modeT > 0.08) earlyCloseRequested = true;
+}
 
 function inGrip(geom, p) {
   const l = geom.toLocal(p.x, p.y);
@@ -763,12 +789,21 @@ function endRound() {
   save.buffs = save.buffs || {};
   if (round.collected === 0) {
     save.streak++;
+    save.combo = 0;
     if (round.guaranteed && !round.grabbed) say(pick(LINES.pityMiss));
     else if (round.nearMiss) say(pick(LINES.near));
     else if (save.streak % 5 === 0) say(pick(LINES.streak));
     else if (!round.grabbed) say(pick(LINES.empty));
     else say(pick(LINES.fail));
-  } else save.streak = 0;
+  } else {
+    save.streak = 0;
+    save.combo = (save.combo || 0) + 1;
+    if (save.combo >= 2) {
+      unlock('fever_master');
+      say(pick(LINES.fever));
+      toast(`🔥【FEVER 狂熱 ${save.combo} 連擊】下把掉落獎勵金幣大加成！`, true);
+    }
+  }
   saveCurrentMachine();
   persist();
   if (prizes.length + spawnQueue.length < 35) {
@@ -787,6 +822,14 @@ function collect(p) {
   save.wins++; save.coll[k.id] = (save.coll[k.id] || 0) + 1;
   if (round) { round.collected++; if (round.guaranteed) save.armed = false; }
   save.streak = 0;
+
+  // 連擊 FEVER 狂熱額外金幣加成
+  if ((save.combo || 0) >= 1) {
+    const feverBonus = Math.min(100, save.combo * 25);
+    save.tokens = (save.tokens || 0) + feverBonus;
+    popups.push({ text: `🔥FEVER x${save.combo} +${feverBonus}🪙`, x: 92, y: 216, life: 2.0, col: '#ff5fa2' });
+  }
+
   let line;
   if (save.plays === 1 && save.wins === 1) { line = pick(LINES.oneshot); unlock('oneshot'); }
   else if (k.rar === 2) line = pick(LINES.winLegend);
@@ -805,6 +848,24 @@ function collect(p) {
     Sfx.legend();
     say('哇靠！寶箱被你夾出來了！下一把怪手出動，整台娃娃都要被你鏟光了！');
     unlock('excavator');
+  } else if (k.jackpotBag) {
+    const bagCoins = Math.floor(rand(160, 261));
+    save.tokens = (save.tokens || 0) + bagCoins;
+    toast(`💰【彩虹金幣福袋爆發】大獎噴發！直接獲得 +${bagCoins} 🪙 金幣！`, true);
+    Sfx.legend();
+    say(`哇！金幣福袋爆開了！直接噴出 ${bagCoins} 枚金幣，賺爛啦！`);
+    unlock('lucky_bag');
+    for (let i = 0; i < 50; i++) {
+      particles.push({
+        x: 92 + rand(-15, 15),
+        y: 236 + rand(-15, 15),
+        vx: rand(-100, 100),
+        vy: rand(-180, -30),
+        life: rand(0.9, 1.8),
+        col: pick(['#ffd23f', '#fff3a8', '#ffea75', '#ff9900']),
+        spark: true
+      });
+    }
   } else if (k.rar === 2) Sfx.legend(); else Sfx.win();
   toast(`獲得 ${k.name}（${RARITY[k.rar].name}）！`);
   popups.push({ text: `GET! ${k.name}`, x: 92, y: 236, life: 1.8, col: RARITY[k.rar].color });
@@ -880,8 +941,14 @@ function step(dt) {
           }
         }
       }
-      if (hit) {
+      if (earlyCloseRequested || hit) {
+        const isEarly = earlyCloseRequested && !hit;
+        earlyCloseRequested = false;
         round.startLen = claw.len;
+        if (isEarly) {
+          popups.push({ text: '⚡二段合爪!', x: geom.hx, y: geom.hy - 15, life: 1.2, col: '#3ff0ff' });
+          if (Math.random() < 0.6) say(pick(LINES.earlyClose));
+        }
         if (round && round.excavator) {
           setMode('close');
           Sfx.excavator();
@@ -1303,11 +1370,17 @@ function render() {
   }
   ctx.drawImage(bg, 0, 0);
   // 招牌燈泡
-  const cols = ['#ffd23f', '#ff5fa2', '#3ff0ff'];
+  const isFever = (save.combo || 0) >= 2;
+  const cols = isFever ? ['#ff3b3b', '#ffd23f', '#5dff7a', '#3ff0ff', '#ff5fa2', '#c08bff'] : ['#ffd23f', '#ff5fa2', '#3ff0ff'];
+  const speedMult = isFever ? 8 : 4;
   for (let x = 8, i = 0; x < W - 6; x += 10, i++) {
-    ctx.fillStyle = cols[(i + Math.floor(t * 4)) % 3]; ctx.fillRect(x, 4, 2, 2); ctx.fillRect(x, 16, 2, 2);
+    ctx.fillStyle = cols[(i + Math.floor(t * speedMult)) % cols.length]; ctx.fillRect(x, 4, 2, 2); ctx.fillRect(x, 16, 2, 2);
   }
-  text('PIXEL CLAW', W / 2, 11, '#ffd23f', 8, 'center', 'PressStart');
+  if (isFever && Math.floor(t * 3) % 2) {
+    text(`FEVER x${save.combo}`, W / 2, 11, '#ff5fa2', 8, 'center', 'PressStart');
+  } else {
+    text('PIXEL CLAW', W / 2, 11, '#ffd23f', 8, 'center', 'PressStart');
+  }
   // 洞口提示
   if (Math.floor(t * 2) % 2) text('▼出口', (GLASS_L + BARRIER_X) / 2, BARRIER_TOP - 10, '#ffd23f', 11);
   const geom = clawGeom();
@@ -1349,6 +1422,7 @@ function render() {
   for (const q of popups) text(q.text, q.x, q.y, q.col, 11);
   // HUD
   if (save.armed && Math.floor(t * 3) % 2) text('★ 保夾中 ★', W / 2, 46, '#ffd23f', 11);
+  else if (isFever && Math.floor(t * 3) % 2) text(`🔥 FEVER x${save.combo} 連擊中 🔥`, W / 2, 46, '#ff5fa2', 11);
   if (mode === 'idle' && credits === 0 && Math.floor(t * 1.6) % 2) {
     ctx.fillStyle = 'rgba(13,8,32,.75)'; ctx.fillRect(58, 112, 140, 34);
     text('INSERT COIN', W / 2, 124, '#5dff7a', 8, 'center', 'PressStart');
@@ -1388,6 +1462,7 @@ function updateUI() {
     if (save.buffs.radar) badges.push('<span class="badge-item buff">🎯 雷達(生效中)</span>');
     if (save.buffs.magnet) badges.push('<span class="badge-item buff">🧲 磁鐵(生效中)</span>');
     if (save.buffs.excavator) badges.push('<span class="badge-item buff" style="background:#5a3e00;color:#ffd23f;border-color:#ffd23f">🚜 怪手(已備妥)</span>');
+    if ((save.combo || 0) >= 2) badges.push(`<span class="badge-item buff" style="background:#8b1040;color:#ff8ad8;border-color:#ff5fa2">🔥 FEVER x${save.combo} (+${save.combo * 25}🪙)</span>`);
 
     const upgNames = {
       rope: { icon: '🧵', name: '加長繩索' },
@@ -1407,9 +1482,15 @@ function updateUI() {
   }
 
   const canMove = mode === 'move';
+  const isDown = mode === 'down';
   $('#btnLeft').disabled = !canMove;
   $('#btnRight').disabled = !canMove;
-  $('#btnDrop').disabled = !canMove;
+  $('#btnDrop').disabled = !canMove && !isDown;
+  if (isDown) {
+    $('#btnDrop').innerHTML = '🛑 合爪<kbd>SPACE</kbd>';
+  } else {
+    $('#btnDrop').innerHTML = '下爪<kbd>SPACE</kbd>';
+  }
   $('#btnCoin').disabled = mode !== 'idle';
 
   const isPlaying = mode !== 'idle';
@@ -1661,9 +1742,12 @@ function refillMachine(themeId, isManualReset = false) {
     const y = FLOOR - 65 + Math.floor(i / 6) * 15 + rand(-2, 2);
     addPrize(x, y, kIdx >= 0 ? kIdx : 0);
   }
-  // 中部（35隻）：特殊功能中型娃娃 (r=11~12)，保證至少 3 隻神秘寶箱
+  // 中部（35隻）：特殊功能中型娃娃 (r=11~12)，保證至少 3 隻神秘寶箱、2 隻彩虹金幣福袋
   for (let i = 0; i < 35; i++) {
-    const id = i < 3 ? 'chest' : pick(theme.mid);
+    let id;
+    if (i < 3) id = 'chest';
+    else if (i < 5) id = 'money_bag';
+    else id = pick(theme.mid);
     const kIdx = KINDS.findIndex(k => k.id === id);
     const x = 80 + (i % 8) * 19 + rand(-3, 3);
     const y = FLOOR - 130 + Math.floor(i / 8) * 16 + rand(-2, 2);
@@ -1773,6 +1857,14 @@ if (chestIdx >= 0 && !prizes.some(p => p.kind === chestIdx)) {
   save.machines[save.theme] = serializePrizes(prizes);
   persist();
 }
+// 確保當前機台內有彩虹金幣福袋（若舊存檔中未曾生成福袋，主動在中層補入 2 隻金幣福袋）
+const bagIdx = KINDS.findIndex(k => k.id === 'money_bag');
+if (bagIdx >= 0 && !prizes.some(p => p.kind === bagIdx)) {
+  addPrize(140, FLOOR - 100, bagIdx);
+  addPrize(190, FLOOR - 85, bagIdx);
+  save.machines[save.theme] = serializePrizes(prizes);
+  persist();
+}
 particles = []; mode = 'idle'; modeT = 0; booted = true;
 claw.px = clawGeom().hx; claw.py = clawGeom().hy;
 drawBoss(false); updateUI();
@@ -1789,8 +1881,16 @@ function frame(now) {
 requestAnimationFrame(frame);
 if (document.fonts) document.fonts.load('11px "Cubic11"').catch(() => {});
 
-/* 給測試用的小後門：在網址加 ?debug 可以在 console 用 PixelClaw 檢查狀態 */
-if (location.search.includes('debug')) window.PixelClaw = { get save() { return save; }, get mode() { return mode; }, get prizes() { return prizes; }, get round() { return round; }, get credits() { return credits; }, claw, insertCoin, requestDrop, input, step, STEP, KINDS };
+/* 對外測試介面 */
+window.PixelClaw = {
+  get save() { return save; },
+  get mode() { return mode; },
+  get prizes() { return prizes; },
+  get round() { return round; },
+  get credits() { return credits; },
+  get earlyCloseRequested() { return earlyCloseRequested; },
+  claw, insertCoin, requestDrop, startRound, input, step, STEP, KINDS, THEMES, ACHS, LINES, collect, endRound
+};
 })();
 </script>
 </body>

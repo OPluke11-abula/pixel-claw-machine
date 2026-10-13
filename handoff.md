@@ -74,6 +74,17 @@
    - 怪手命運鎖定為 `round.fate = { hold: true }`，運送途中絕不脫落。
    - 回到出貨洞口上方時，挖斗打開，`claw.heldList` 內的所有娃娃施加階梯微延遲加速度自然掉入洞口，連續觸發多次 `collect(p)`，實現滿載而歸的極致爽感！
 
+### 2.7 二段提前合爪、FEVER 狂熱與彩虹金幣福袋
+1. **二段提前合爪 (`earlyCloseRequested`)**：
+   - 消除傳統夾娃娃機「下爪後只能被動等待到底」的枯燥感。在 `down` 模式期間，按鍵即時切換為「🛑 合爪」。
+   - 再次按下 `Space` 或點擊按鈕即時標記 `earlyCloseRequested = true`，於半空中立即觸發 `findTarget(geom)` 與閉合夾取，使玩家能主動抓取浮空漂浮氣球、高層立體耳朵或半山腰的娃娃。
+2. **FEVER TIME 連擊狂熱模式 (`save.combo`)**：
+   - 連續獲勝（`save.combo >= 2`）時啟動狂熱模式：招牌燈泡以 2 倍速進行 6 色彩虹旋轉，頂部招牌閃爍 `FEVER xN`，機台狀態顯示狂熱徽章。
+   - 狂熱狀態下每夾進一隻娃娃，額外加贈 `Math.min(100, save.combo * 25)` 金幣，極大提高爽快感與連莊刺激感。若未得獎則連擊歸零。
+3. **彩虹金幣福袋 (`money_bag`)**：
+   - 中層特製 8-bit 福袋娃娃（$r=11, w=1.5$），每台保證生成 2 隻。
+   - 夾出入洞立即引爆金幣大獎（+160~260 🪙 金幣），解鎖「福袋大富翁」成就並噴射大量金幣煙火粒子。
+
 ---
 
 ## 🕹️ 3. 模組與核心函式對照表
@@ -83,7 +94,8 @@
 | `clawGeom()` | 計算爪子關節點世界座標與局部逆轉換 | 支援標準爪縮放與 `isExcavator` 巨型挖斗幾何 |
 | `findExcavatorTargets(geom)` | 搜尋怪手挖斗空間內重疊的多隻娃娃 | 一次判定多達 7 隻娃娃裝入 `claw.heldList` |
 | `decideFate(p, lx)` | 決定該次抓取是成功持握或是半空脫落 | 依據重量、爪力、偏心率與升級加成計算機率 |
-| `refillMachine(themeId, isManual)` | 重新填充機台內 95 隻娃娃並沉降 | 分為底 (20)、中 (35，含神秘寶箱)、頂 (40) 三層，冷卻 180s |
+| `requestDrop()` | 處理出爪與二段合爪請求 | `move` 觸發下爪，`down` 觸發 `earlyCloseRequested` |
+| `refillMachine(themeId, isManual)` | 重新填充機台內 95 隻娃娃並沉降 | 分為底 (20)、中 (35，含神秘寶箱與福袋)、頂 (40) 三層，冷卻 180s |
 | `changeTheme(themeId)` | 切換 4 大主題機台 | 獨立存檔防洗 bug，切換主題維持殘局現狀 |
 | `toggleSpeed()` | 切換 1X / 2X 倍速 | 改變 `timeScale`，調整 `acc += dt * timeScale` |
 | `openDex()` / `openShop()` | 開啟圖鑑櫃與 RPG 商店視窗 | 一鍵出售重複娃娃、升級 6 大改裝、購買怪手卷與道具 |
@@ -101,8 +113,9 @@
   "pity": 0,
   "armed": false,
   "streak": 0,
-  "coll": { "bear": 1, "lucky": 1 },
-  "ach": { "first": 1728800000000 },
+  "combo": 0,
+  "coll": { "bear": 1, "lucky": 1, "money_bag": 1 },
+  "ach": { "first": 1728800000000, "fever_master": 1728800050000 },
   "muted": false,
   "visited": true,
   "tokens": 250,
@@ -123,9 +136,10 @@
 ---
 
 ## 🚀 5. 測試驗證紀錄 (Playwright E2E)
-- **Node.js 語法檢驗**：`new Function(script)` 驗證 0 錯誤。
+- **Node.js 語法檢驗**：`vm.Script` 語法測試雙版本（`index.html` 與 `prototype_25d.html`）100% 通過。
 - **Playwright 瀏覽器實機測試**：
-  - 成功切換 2X 倍速（按鈕即時變為 `⏩ 2X` 且高亮綠色，下爪速度明顯加倍）。
-  - 成功切換至「⚙️ 鋼鐵機械機」，確認場上生成 95 隻機械娃娃（包含鋼鐵巨神、重力磚塊等）。
-  - 成功執行重整按鈕，觸發 180 秒冷卻倒數，畫面即時倒數至 `0:00` 前無法重複點擊。
-  - 完整投幣、移動、下爪、抓取、回程結算無任何 JavaScript Exception。
+  - 驗證二段按鍵提前合爪：下爪中按鈕切換為 `🛑 合爪`，點擊即時合爪閉合並標記 `⚡二段合爪!`。
+  - 驗證彩虹金幣福袋爆獎：夾出福袋獲得 +213 🪙 金幣，並解鎖 `lucky_bag` 成就。
+  - 驗證 FEVER TIME 連擊模式：連中 2 輪啟動彩虹跑馬燈、HUD 徽章，後續得獎額外獲得狂熱加成金幣。
+  - 驗證失誤連擊重置：連續得獎中斷時 `save.combo` 安全歸零。
+  - 驗證 2X 倍速與機台切換：全流程 0 JavaScript Exception。
