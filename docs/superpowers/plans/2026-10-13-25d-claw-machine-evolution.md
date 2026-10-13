@@ -29,7 +29,7 @@
 - Consumes: 3D 空間邊界 `BOX_X = 74, BOX_Z = 54, BOX_TOP_Y = 195`
 - Produces: 娃娃陣列 `prizes`，每個娃娃具備 3D 物理屬性 `{ id, type, x, y, z, vx, vy, vz, r, w, held, dropping }`，並由 `step3DPhysics(dt)` 驅動碰撞與推擠。
 
-- [ ] **Step 1: 編寫 3D 物理引擎單元測試腳本**
+- [x] **Step 1: 編寫 3D 物理引擎單元測試腳本**
 
 ```javascript
 // scratch/test_25d_physics.js
@@ -75,12 +75,12 @@ for (const p of P.prizes) {
 console.log('✅ 3D Stack Physics Test Passed!');
 ```
 
-- [ ] **Step 2: 執行測試確認初始狀態失敗**
+- [x] **Step 2: 執行測試確認初始狀態失敗**
 
 Run: `node scratch/test_25d_physics.js`
 Expected: FAIL（因 `P.step3DPhysics` 尚未實作）
 
-- [ ] **Step 3: 於 `prototype_25d.html` 實作 3D 球體剛體碰撞與自然堆疊**
+- [x] **Step 3: 於 `prototype_25d.html` 實作 3D 球體剛體碰撞與自然堆疊**
 
 在 `prototype_25d.html` 中實作：
 1. `initPrizes()`：生成 60 隻具備隨機微擾三維座標的娃娃。
@@ -92,12 +92,12 @@ Expected: FAIL（因 `P.step3DPhysics` 尚未實作）
      若 $d < r_A + r_B$，進行重疊位移分離與動量交換。
    - 開場預先模擬 180 步沉降，形成自然的有機立體山堆。
 
-- [ ] **Step 4: 重新執行測試驗證 3D 物理通過**
+- [x] **Step 4: 重新執行測試驗證 3D 物理通過**
 
 Run: `node scratch/test_25d_physics.js`
 Expected: PASS（輸出 `✅ 3D Stack Physics Test Passed!`）
 
-- [ ] **Step 5: 提交 Commit**
+- [x] **Step 5: 提交 Commit**
 
 ```bash
 git add prototype_25d.html scratch/test_25d_physics.js
