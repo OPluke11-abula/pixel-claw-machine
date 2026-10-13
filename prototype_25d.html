@@ -6,14 +6,15 @@
 <title>PIXEL CLAW 2.5D 等角透視立體娃娃機</title>
 <style>
   :root {
-    --bg: #0c0717;
+    --bg: #0a0614;
     --cabinet-top: #ff2a70;
-    --cabinet-body: #2b184f;
-    --cabinet-edge: #523091;
+    --cabinet-body: #1e1136;
+    --cabinet-edge: #4a2985;
     --accent: #ffd23f;
     --cyan: #38b6ff;
     --pink: #ff5fa2;
     --green: #5dff7a;
+    --red: #ff3b3b;
     --text: #f0e6ff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -34,7 +35,7 @@
     margin-bottom: 6px;
   }
   .title {
-    font-size: 19px;
+    font-size: 20px;
     color: var(--accent);
     font-weight: 900;
     letter-spacing: 2px;
@@ -44,12 +45,11 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #231342;
+    background: #1e1038;
     color: var(--cyan);
     font-size: 11px;
     padding: 3px 10px;
     border-radius: 20px;
-    margin-top: 4px;
     border: 1px solid #4a2985;
   }
   #game-box {
@@ -66,8 +66,8 @@
   }
   .controls-panel {
     margin-top: 8px;
-    width: 330px;
-    background: #1b1033;
+    width: 340px;
+    background: #170c2e;
     border: 2px solid #482882;
     border-radius: 8px;
     padding: 8px 10px;
@@ -79,26 +79,56 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
-    background: rgba(0,0,0,0.4);
-    padding: 5px 8px;
+    font-size: 11px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px 8px;
     border-radius: 4px;
     border: 1px solid #2e1a54;
   }
+  .boss-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #231342;
+    border: 1px solid #57339e;
+    border-radius: 6px;
+    padding: 5px 8px;
+  }
+  .boss-avatar {
+    width: 24px;
+    height: 24px;
+    background: #e8336b;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .boss-bubble {
+    font-size: 11px;
+    color: #ffd23f;
+    line-height: 1.3;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .dpad-layout {
     display: grid;
-    grid-template-columns: 54px 54px 54px;
-    grid-template-rows: 40px 40px;
-    gap: 5px;
+    grid-template-columns: 56px 56px 56px;
+    grid-template-rows: 38px 38px;
+    gap: 4px;
     justify-content: center;
-    margin: 4px auto;
+    margin: 2px auto;
   }
   .pbtn {
     background: #3c206d;
     color: #fff;
     border: 2px solid #653bb3;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -113,35 +143,50 @@
     background: var(--pink);
     border-color: #ff85be;
   }
+  .pbtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 3px 0 #1e0d3b;
+  }
   .action-row {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 0.8fr;
+    gap: 6px;
+  }
+  .btn-coin {
+    background: #27ae60;
+    border-color: #2ecc71;
+    color: #fff;
+    font-size: 13px;
+    padding: 8px;
+    box-shadow: 0 4px 0 #145a32;
   }
   .btn-drop {
-    flex: 2;
     background: #e82e65;
     border-color: #ff6091;
     color: #fff;
-    font-size: 15px;
-    padding: 10px;
+    font-size: 13px;
+    padding: 8px;
     box-shadow: 0 4px 0 #801233;
   }
-  .btn-drop:active, .btn-drop.active {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #801233;
-    background: #ff477d;
-  }
-  .btn-speed {
-    flex: 1;
-    background: #255c99;
-    border-color: #3b82d6;
-    font-size: 12px;
-    box-shadow: 0 3px 0 #122d4d;
-  }
-  .btn-speed.on {
+  .btn-drop.down-mode {
     background: #f39c12;
     border-color: #f1c40f;
-    box-shadow: 0 3px 0 #965b05;
+    box-shadow: 0 4px 0 #7e4b02;
+    color: #1b1030;
+  }
+  .menu-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .menu-btn {
+    flex: 1;
+    padding: 5px;
+    font-size: 11px;
+    background: #2f1754;
+    border-color: #523091;
   }
   .toast-box {
     position: absolute;
@@ -164,12 +209,77 @@
   }
   .toast-box.show { opacity: 1; transform: translateX(-50%) translateY(3px); }
   .guide-txt {
-    font-size: 11px;
-    color: #a48ecc;
+    font-size: 10px;
+    color: #9f8ac2;
     text-align: center;
     line-height: 1.4;
   }
   .guide-txt b { color: var(--accent); }
+
+  /* 彈窗樣式 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+  }
+  .modal-card {
+    background: #1e1136;
+    border: 2px solid #633bb3;
+    border-radius: 8px;
+    width: 320px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #4a2985;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .modal-body {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .dex-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .dex-item {
+    background: #2a164d;
+    border: 1px solid #523091;
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-align: center;
+  }
+  .shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2a164d;
+    border: 1px solid #523091;
+    border-radius: 6px;
+    padding: 8px;
+  }
 </style>
 </head>
 <body>
@@ -178,7 +288,7 @@
   <div class="title">PIXEL CLAW 2.5D</div>
   <div style="display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:4px">
     <div class="sub-badge">
-      <span>🕹️ 等角透視 4 向立體機台</span>
+      <span>🕹️ 等角透視 4 向立體街機</span>
       <span style="color:#ffd23f">● 雙軸深度瞄準</span>
     </div>
     <a href="index.html" class="sub-badge" style="text-decoration:none;background:#441434;border-color:#ff477d;color:#ff85be;font-weight:bold">◀ 返回 2D 經典版</a>
@@ -186,18 +296,26 @@
 </div>
 
 <div id="game-box">
-  <canvas id="view" width="330" height="420"></canvas>
+  <canvas id="view" width="340" height="440"></canvas>
   <div id="toast" class="toast-box">準備就緒！</div>
 </div>
 
 <div class="controls-panel">
+  <!-- 狀態條 -->
   <div class="info-bar">
-    <span>狀態: <b id="ui-mode" style="color:var(--green)">MOVE 瞄準</b></span>
-    <span>金幣: <b id="ui-coins" style="color:var(--accent)">100 🪙</b></span>
-    <span>收穫: <b id="ui-wins" style="color:var(--pink)">0 隻</b></span>
-    <button class="pbtn" id="btn-sound" style="padding:2px 8px;font-size:11px">🔊 音效</button>
+    <span>狀態: <b id="ui-mode" style="color:var(--green)">待投幣</b></span>
+    <span>信用: <b id="ui-credits" style="color:var(--cyan)">0</b></span>
+    <span>金幣: <b id="ui-coins" style="color:var(--accent)">120 🪙</b></span>
+    <span>保夾: <b id="ui-pity" style="color:var(--pink)">0/300</b></span>
   </div>
 
+  <!-- 台主阿財即時吐槽框 -->
+  <div class="boss-card">
+    <div class="boss-avatar" id="boss-face">👨‍🦱</div>
+    <div class="boss-bubble" id="boss-text">投個幣試試手氣吧，看準再下爪！</div>
+  </div>
+
+  <!-- 4 向十字控制鍵盤 -->
   <div class="dpad-layout">
     <div></div>
     <button class="pbtn" id="btn-up">▲ 深入</button>
@@ -207,31 +325,82 @@
     <button class="pbtn" id="btn-right">▶ 往右</button>
   </div>
 
+  <!-- 主要動作按鍵 -->
   <div class="action-row">
-    <button class="pbtn btn-drop" id="btn-drop">🎯 下爪抓取 (SPACE)</button>
-    <button class="pbtn btn-speed" id="btn-speed">⏩ 2X倍速</button>
+    <button class="pbtn btn-coin" id="btn-coin">🪙 投幣 10元</button>
+    <button class="pbtn btn-drop" id="btn-drop">🎯 下爪抓取</button>
+    <button class="pbtn" id="btn-speed">▶ 1X</button>
+  </div>
+
+  <!-- 次要選單 -->
+  <div class="menu-row">
+    <button class="pbtn menu-btn" id="btn-dex">🧸 娃娃櫃(換金幣)</button>
+    <button class="pbtn menu-btn" id="btn-shop">⚙️ 改裝商店</button>
+    <button class="pbtn menu-btn" id="btn-reset-machine">🔄 重整機台</button>
+    <button class="pbtn menu-btn" id="btn-sound">🔊 音效</button>
   </div>
 
   <div class="guide-txt">
-    鍵盤：<b>W / S</b> 深度(前後)｜<b>A / D</b> 水平(左右)｜<b>SPACE</b> 下爪<br>
-    地面<b>「金色十字光圈與紅色雷射虛線」</b>為爪子即時落點！
+    操作：<b>WASD / 方向鍵</b> 移動｜<b>Space</b> 下爪/二段合爪｜<b>Enter</b> 投幣<br>
+    爪子陰影會<b>「自動吸附於娃娃頭頂最高高度」</b>，看準金色十字即可命中！
+  </div>
+</div>
+
+<!-- 彈窗 -->
+<div id="modal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span id="modal-title">娃娃櫃</span>
+      <button class="pbtn" id="modal-close" style="padding:2px 8px;font-size:11px">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
 <script>
-(function() {
+(() => {
+  'use strict';
+
   const cvs = document.getElementById('view');
   const ctx = cvs.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
   const W = cvs.width, H = cvs.height;
   const ORIGIN_X = W / 2;
-  const ORIGIN_Y = 270;
+  const ORIGIN_Y = 285;
 
-  // 8-Bit Web Audio 合成器
+  /* ============ 本地儲存與存檔 ============ */
+  const SAVE_KEY = 'pixel-claw-25d-save-v1';
+  const defSave = () => ({
+    coins: 150,
+    spent: 0,
+    wins: 0,
+    pity: 0,
+    armed: false,
+    combo: 0,
+    coll: {},
+    upgrades: { rope: 0, str: 0, time: 0, size: 0 },
+    buffs: {},
+    muted: false
+  });
+  let save = defSave();
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const loaded = JSON.parse(raw);
+      save = Object.assign(defSave(), loaded);
+      save.upgrades = Object.assign({ rope: 0, str: 0, time: 0, size: 0 }, loaded.upgrades || {});
+      save.coll = loaded.coll || {};
+      save.buffs = loaded.buffs || {};
+    }
+  } catch (e) {}
+  function persist() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
+  }
+
+  /* ============ 8-Bit Web Audio 音效 ============ */
   const Sfx = {
     ctx: null,
-    muted: false,
     init() {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -240,7 +409,7 @@
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     },
     tone(freq, dur, { to, type = 'square', vol = 0.25, when = 0 } = {}) {
-      if (this.muted || !this.ctx) return;
+      if (save.muted || !this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = type;
@@ -255,6 +424,7 @@
       osc.stop(t + dur + 0.05);
     },
     click() { this.init(); this.tone(900, 0.03, { vol: 0.15 }); },
+    coin() { this.init(); this.tone(987, 0.08, { vol: 0.3 }); this.tone(1318, 0.18, { when: 0.08, vol: 0.35 }); },
     drop() { this.init(); this.tone(480, 0.2, { to: 160, vol: 0.3 }); },
     grab() { this.init(); this.tone(200, 0.15, { to: 320, vol: 0.35 }); },
     win() {
@@ -263,59 +433,87 @@
       this.tone(659, 0.08, { when: 0.08, vol: 0.3 });
       this.tone(784, 0.18, { when: 0.16, vol: 0.35 });
     },
-    slip() { this.init(); this.tone(360, 0.18, { to: 140, type: 'sawtooth', vol: 0.25 }); }
+    legend() {
+      this.init();
+      [523, 659, 784, 1046].forEach((f, idx) => {
+        this.tone(f, 0.09, { when: idx * 0.08, vol: 0.32 });
+      });
+    },
+    slip() { this.init(); this.tone(360, 0.18, { to: 140, type: 'sawtooth', vol: 0.25 }); },
+    boom() {
+      this.init();
+      this.tone(160, 0.25, { to: 40, type: 'sawtooth', vol: 0.45 });
+    }
   };
 
-  // 2.5D 經典 2:1 等角投影矩陣
-  // 3D 空間定義：
-  // X: 左右軸 (-76 ~ +76)
-  // Z: 前後深淺軸 (-56 深入機台 ~ +56 靠近正面)
-  // Y: 垂直高度 (0 為機台底板，190 為天車軌道頂部)
+  /* ============ 2.5D 等角投影矩陣 ============ */
   function project(x, y, z) {
     return {
-      sx: Math.round(ORIGIN_X + (x - z) * 1.08),
-      sy: Math.round(ORIGIN_Y + (x + z) * 0.54 - y)
+      sx: Math.round(ORIGIN_X + (x - z) * 1.10),
+      sy: Math.round(ORIGIN_Y + (x + z) * 0.55 - y)
     };
   }
 
-  // 機台邊界空間常數
+  /* ============ 空間常數 ============ */
   const BOX_X = 74;      // 機台半寬
   const BOX_Z = 54;      // 機台半深
-  const BOX_TOP_Y = 185; // 天車軌道高
+  const BOX_TOP_Y = 195; // 天車軌道高
   const CHUTE_X = -46;   // 出貨口邊界 (前左角落)
   const CHUTE_Z = 24;    // 出貨口前緣
+  const HOME_X = -56, HOME_Z = 38; // 出貨口正上方懸停原點
 
-  // 娃娃種類 (具備 2.5D 立體五官與特徵)
+  /* ============ 8 種 2.5D 特色娃娃 ============ */
   const DOLL_TYPES = [
-    { id: 'bear', name: '小熊', col: '#c4783f', r: 7.5, ear: true },
-    { id: 'bunny', name: '兔兔', col: '#ffffff', r: 7.2, ear: true, longEar: true },
-    { id: 'chick', name: '小雞', col: '#ffd23f', r: 6.8, beak: true },
-    { id: 'cat', name: '喵喵', col: '#ff9254', r: 7.2, ear: true },
-    { id: 'frog', name: '青蛙', col: '#52d964', r: 7.5, frogEyes: true },
-    { id: 'chest', name: '神秘寶箱', col: '#8a3a14', r: 8.8, isChest: true },
-    { id: 'king', name: '金色招財貓', col: '#ffc800', r: 11.5, isBoss: true }
+    { id: 'bear', name: '小熊', col: '#c4783f', r: 7.5, w: 1.0, ear: true, price: 25 },
+    { id: 'bunny', name: '兔兔', col: '#ffffff', r: 7.2, w: 1.0, ear: true, longEar: true, price: 25 },
+    { id: 'chick', name: '小雞', col: '#ffd23f', r: 6.8, w: 1.0, beak: true, price: 25 },
+    { id: 'cat', name: '喵喵', col: '#ff9254', r: 7.2, w: 1.0, ear: true, price: 25 },
+    { id: 'frog', name: '青蛙', col: '#52d964', r: 7.5, w: 1.0, frogEyes: true, price: 25 },
+    { id: 'chest', name: '神秘寶箱', col: '#8a3a14', r: 8.8, w: 1.4, isChest: true, price: 80 },
+    { id: 'money_bag', name: '彩虹金幣福袋', col: '#e82e65', r: 8.5, w: 1.3, isBag: true, price: 60 },
+    { id: 'king', name: '金色招財貓王', col: '#ffc800', r: 12.0, w: 2.8, isBoss: true, price: 250 }
   ];
 
+  /* ============ 遊戲狀態 ============ */
   let prizes = [];
   let nextId = 1;
+  const claw = {
+    x: HOME_X,
+    z: HOME_Z,
+    y: BOX_TOP_Y,
+    open: 1.0,
+    heldList: []
+  };
 
+  let mode = 'idle'; // idle, move, down, grab, up, back, release
+  let modeT = 0;
+  let timer = 18;
+  let credits = 0;
+  let timeScale = 1;
+  let particles = [];
+  let popups = [];
+  let earlyCloseRequested = false;
+  let screenShake = 0;
+  const input = { left: false, right: false, up: false, down: false };
+
+  /* ============ 3D 剛體物理堆疊系統 ============ */
   function initPrizes() {
     prizes = [];
-    // 生成 50 隻娃娃三層立體堆疊於機台中央偏後區
-    for (let i = 0; i < 50; i++) {
+    // 生成 60 隻立體娃娃，有機散佈於機台後方與中央
+    for (let i = 0; i < 60; i++) {
       let type;
-      if (i === 15 || i === 32) type = DOLL_TYPES[5]; // 神秘寶箱
-      else if (i === 0) type = DOLL_TYPES[6];         // 金色招財貓
+      if (i === 0) type = DOLL_TYPES[7]; // 招財貓王
+      else if (i === 8 || i === 22) type = DOLL_TYPES[5]; // 神秘寶箱
+      else if (i === 14 || i === 35) type = DOLL_TYPES[6]; // 彩虹金幣福袋
       else type = DOLL_TYPES[i % 5];
 
-      // 避免生成在出貨洞口正上方
       let px, pz;
       do {
-        px = (i % 8) * 16 - 36 + (Math.random() - 0.5) * 8;
-        pz = Math.floor(i / 8) * 14 - 38 + (Math.random() - 0.5) * 8;
+        px = (i % 8) * 16 - 40 + (Math.random() - 0.5) * 10;
+        pz = Math.floor(i / 8) * 13 - 42 + (Math.random() - 0.5) * 10;
       } while (px < CHUTE_X + 6 && pz > CHUTE_Z - 6);
 
-      const py = Math.floor(i / 16) * 13 + type.r;
+      const py = Math.floor(i / 15) * 14 + type.r + (Math.random() * 4);
       prizes.push({
         id: nextId++,
         type,
@@ -324,101 +522,356 @@
         y: py,
         vx: 0, vy: 0, vz: 0,
         r: type.r,
+        w: type.w,
         held: false,
         dropping: false
       });
     }
+
+    // 開場預先模擬 160 步 3D 物理沉降，讓娃娃自然碰撞滑落成真實山堆
+    for (let s = 0; s < 160; s++) step3DPhysics(0.016);
   }
   initPrizes();
 
-  // 天車與爪子狀態
-  const HOME_X = -56, HOME_Z = 38; // 出貨口正上方懸停原點
-  const claw = {
-    x: HOME_X,
-    z: HOME_Z,
-    y: BOX_TOP_Y,
-    open: 1.0,     // 1.0 = 全開, 0.0 = 緊閉
-    heldList: []
+  function step3DPhysics(dt) {
+    const GRAV = -360;
+    const len = prizes.length;
+
+    // 1. 重力與速度更新
+    for (let i = 0; i < len; i++) {
+      const p = prizes[i];
+      if (p.held) continue;
+      p.vy += GRAV * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      p.vx *= (1 - 2.5 * dt);
+      p.vz *= (1 - 2.5 * dt);
+    }
+
+    // 2. 娃娃與娃娃之間的 3D 剛體碰撞與排斥推擠
+    for (let i = 0; i < len; i++) {
+      const p1 = prizes[i];
+      if (p1.held) continue;
+      for (let j = i + 1; j < len; j++) {
+        const p2 = prizes[j];
+        if (p2.held) continue;
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dz = p2.z - p1.z;
+        const dist = Math.hypot(dx, dy, dz);
+        const minDist = p1.r + p2.r;
+        if (dist < minDist && dist > 1e-4) {
+          const pen = (minDist - dist) * 0.5;
+          const nx = dx / dist, ny = dy / dist, nz = dz / dist;
+          p1.x -= nx * pen; p1.y -= ny * pen; p1.z -= nz * pen;
+          p2.x += nx * pen; p2.y += ny * pen; p2.z += nz * pen;
+
+          // 相對衝量交換
+          const rvx = p2.vx - p1.vx, rvy = p2.vy - p1.vy, rvz = p2.vz - p1.vz;
+          const relVel = rvx * nx + rvy * ny + rvz * nz;
+          if (relVel < 0) {
+            const imp = relVel * 0.25;
+            p1.vx += imp * nx; p1.vy += imp * ny; p1.vz += imp * nz;
+            p2.vx -= imp * nx; p2.vy -= imp * ny; p2.vz -= imp * nz;
+          }
+        }
+      }
+    }
+
+    // 3. 邊界約束與地板
+    for (let i = 0; i < len; i++) {
+      const p = prizes[i];
+      if (p.held) continue;
+
+      // 邊界反彈
+      if (p.x < -BOX_X + p.r) { p.x = -BOX_X + p.r; p.vx = Math.abs(p.vx) * 0.4; }
+      if (p.x > BOX_X - p.r) { p.x = BOX_X - p.r; p.vx = -Math.abs(p.vx) * 0.4; }
+      if (p.z < -BOX_Z + p.r) { p.z = -BOX_Z + p.r; p.vz = Math.abs(p.vz) * 0.4; }
+      if (p.z > BOX_Z - p.r) { p.z = BOX_Z - p.r; p.vz = -Math.abs(p.vz) * 0.4; }
+
+      // 出貨口壓克力圍欄防滾入 (圍欄高 Y=36)
+      if (p.y < 36 && !p.dropping) {
+        if (p.x < CHUTE_X + p.r && p.z > CHUTE_Z - p.r) {
+          if (p.x >= CHUTE_X) { p.x = CHUTE_X + p.r; p.vx = Math.abs(p.vx) * 0.5; }
+          else if (p.z <= CHUTE_Z) { p.z = CHUTE_Z - p.r; p.vz = -Math.abs(p.vz) * 0.5; }
+          else { p.x = CHUTE_X + p.r; }
+        }
+      }
+
+      // 出貨洞口判斷
+      const inChute = (p.x <= CHUTE_X && p.z >= CHUTE_Z);
+      if (inChute && p.dropping) {
+        // 出貨洞口向下開放
+        if (p.y < -30) {
+          onCollectPrize(p);
+          prizes.splice(i, 1);
+          return;
+        }
+      } else {
+        // 普通地面約束
+        if (p.y < p.r) {
+          p.y = p.r;
+          p.vy = 0;
+          p.dropping = false;
+        }
+      }
+    }
+  }
+
+  /* ============ 高度自適應陰影投影演算法 ============ */
+  function getUnderSurfaceHeight(cx, cz) {
+    let maxH = 0;
+    const aimRad = 11;
+    for (const p of prizes) {
+      if (p.held) continue;
+      const d = Math.hypot(p.x - cx, p.z - cz);
+      if (d < p.r + aimRad) {
+        const top = p.y + p.r;
+        if (top > maxH) maxH = top;
+      }
+    }
+    return maxH;
+  }
+
+  /* ============ 台主即時台詞 ============ */
+  const LINES = {
+    welcome: ['歡迎光臨！投幣體驗 2.5D 深度立體對位吧！', '看準金色十字與虛線，對位超直覺！'],
+    coin: ['投下去就對了！立體天車手感一流！', '一次十塊，夢想立體呈現！'],
+    fail: ['哎呀～偏了一點點！注意深度軸前後位置！', '爪子今天有點害羞啦，再調一下前後！'],
+    near: ['都到洞口邊緣了！差那麼一點點！', '剛剛差點翻進去！再來一把必中！'],
+    win: ['夾到啦！2.5D 雙軸瞄準高手喔！', '技術流！拍照打卡記得標我們店！'],
+    earlyClose: ['二段提前合爪！內行的街機老手！', '空中攔截！手速極快！'],
+    fever: ['連續命中！！FEVER TIME 狂熱連擊！', '手感燙到不行！金幣加碼狂噴！'],
+    pity: ['嗶嗶嗶！保夾模式啟動，碰得到就必定抓走！']
   };
-
-  let mode = 'move'; // move, down, grab, up, back, release
-  let modeT = 0;
-  let coins = 120;
-  let wins = 0;
-  let timeScale = 1;
-  let particles = [];
-
-  const input = { left: false, right: false, up: false, down: false };
-
-  function showToast(msg) {
+  function say(text) {
+    const el = document.getElementById('boss-text');
+    if (el) el.textContent = text;
+  }
+  function toast(msg) {
     const el = document.getElementById('toast');
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(el.timer);
-    el.timer = setTimeout(() => el.classList.remove('show'), 2400);
+    el.timer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
-  // 物理步進
+  /* ============ 回合與操作邏輯 ============ */
+  function insertCoin() {
+    Sfx.coin();
+    if (credits >= 9) { toast('一次最多先投 9 枚硬幣！'); return; }
+    if (save.coins < 10) { toast('🪙 金幣不足！請去娃娃櫃出售娃娃'); return; }
+    save.coins -= 10;
+    save.spent += 10;
+    save.pity += 10;
+    credits++;
+    if (save.pity >= 300) {
+      save.pity = 300;
+      save.armed = true;
+      say(LINES.pity[0]);
+      toast('🚨【保夾啟動】爪力 100% 滿開！碰到必抓走！');
+    } else {
+      say(LINES.coin[Math.floor(Math.random() * LINES.coin.length)]);
+    }
+    persist();
+    updateUI();
+  }
+
+  function startRound() {
+    if (credits <= 0) return;
+    credits--;
+    mode = 'move';
+    modeT = 0;
+    timer = 18 + (save.upgrades.time || 0) * 4;
+    earlyCloseRequested = false;
+    claw.open = 1.0;
+    claw.heldList = [];
+    updateUI();
+  }
+
+  function triggerDrop() {
+    if (mode === 'move') {
+      mode = 'down';
+      modeT = 0;
+      earlyCloseRequested = false;
+      Sfx.drop();
+      updateUI();
+    } else if (mode === 'down' && modeT > 0.08) {
+      // 二段提前合爪
+      triggerEarlyClose();
+    }
+  }
+
+  function triggerEarlyClose() {
+    if (mode === 'down') {
+      earlyCloseRequested = true;
+      mode = 'grab';
+      modeT = 0;
+      Sfx.grab();
+      say(LINES.earlyClose[Math.floor(Math.random() * LINES.earlyClose.length)]);
+      const geom = project(claw.x, claw.y, claw.z);
+      popups.push({ text: '⚡二段合爪!', sx: geom.sx, sy: geom.sy - 15, life: 1.2, col: '#38b6ff' });
+      updateUI();
+    }
+  }
+
+  function onCollectPrize(p) {
+    save.wins++;
+    save.coll[p.type.id] = (save.coll[p.type.id] || 0) + 1;
+    save.combo = (save.combo || 0) + 1;
+    let gain = p.type.price || 25;
+
+    // FEVER 連擊加成
+    if (save.combo >= 2) {
+      const bonus = Math.min(100, save.combo * 25);
+      gain += bonus;
+      say(LINES.fever[Math.floor(Math.random() * LINES.fever.length)]);
+      toast(`🔥【FEVER x${save.combo} 連擊】獲得【${p.type.name}】大賺 +${gain}🪙！`);
+    } else {
+      say(LINES.win[Math.floor(Math.random() * LINES.win.length)]);
+      toast(`🎉 出貨成功！獲得【${p.type.name}】+${gain}🪙！`);
+    }
+
+    // 彩虹福袋爆獎
+    if (p.type.isBag) {
+      const bagJackpot = 180 + Math.floor(Math.random() * 80);
+      gain += bagJackpot;
+      Sfx.legend();
+      toast(`💰【彩虹金幣福袋爆發】直接大獎噴出 +${gain}🪙 金幣！`);
+      screenShake = 6;
+    } else if (p.type.isChest) {
+      save.buffs.excavator = true;
+      Sfx.legend();
+      toast('🎁【開啟神秘寶箱】獲得傳說巨型怪手！下把超寬狂鏟！');
+    } else if (p.type.isBoss) {
+      Sfx.legend();
+      screenShake = 5;
+    } else {
+      Sfx.win();
+    }
+
+    save.coins += gain;
+    if (save.armed) { save.armed = false; save.pity = 0; }
+
+    // 出貨煙火粒子
+    for (let k = 0; k < 35; k++) {
+      particles.push({
+        sx: ORIGIN_X - 60 + (Math.random() - 0.5) * 25,
+        sy: ORIGIN_Y + 30 + (Math.random() - 0.5) * 20,
+        vx: (Math.random() - 0.5) * 90,
+        vy: -Math.random() * 140 - 50,
+        life: 0.9,
+        col: ['#ffd23f', '#ff5fa2', '#38b6ff', '#5dff7a', '#c08bff'][Math.floor(Math.random() * 5)]
+      });
+    }
+
+    persist();
+    updateUI();
+  }
+
+  /* ============ 主物理與遊戲循環 ============ */
   function update(dt) {
     dt *= timeScale;
     modeT += dt;
 
-    if (mode === 'move') {
-      const spd = 70;
-      if (input.left) claw.x = Math.max(-BOX_X + 12, claw.x - spd * dt);
-      if (input.right) claw.x = Math.min(BOX_X - 12, claw.x + spd * dt);
-      if (input.up) claw.z = Math.max(-BOX_Z + 12, claw.z - spd * dt);
-      if (input.down) claw.z = Math.min(BOX_Z - 12, claw.z + spd * dt);
+    if (mode === 'idle') {
+      if (credits > 0) startRound();
+    } else if (mode === 'move') {
+      timer -= dt;
+      if (timer <= 0) triggerDrop();
+
+      const spd = (75 + (save.upgrades.speed || 0) * 12) * dt;
+      if (input.left) claw.x = Math.max(-BOX_X + 12, claw.x - spd);
+      if (input.right) claw.x = Math.min(BOX_X - 12, claw.x + spd);
+      if (input.up) claw.z = Math.max(-BOX_Z + 12, claw.z - spd);
+      if (input.down) claw.z = Math.min(BOX_Z - 12, claw.z + spd);
     } else if (mode === 'down') {
-      claw.y -= 85 * dt;
-      // 碰撞檢測：爪尖接觸到娃娃或地面
-      let hit = claw.y <= 16;
-      for (const p of prizes) {
-        const dx = p.x - claw.x, dz = p.z - claw.z, dy = p.y - (claw.y - 12);
-        const dist = Math.hypot(dx, dz);
-        if (dist < p.r + 9 && Math.abs(dy) < 11) {
-          hit = true;
-          break;
+      const descendSpeed = 85 + (save.upgrades.speed || 0) * 12;
+      claw.y -= descendSpeed * dt;
+
+      const maxDepth = 14 - (save.upgrades.rope || 0) * 4;
+      let hit = claw.y <= maxDepth;
+      if (!hit) {
+        // 接觸娃娃頭頂
+        for (const p of prizes) {
+          const dx = p.x - claw.x, dz = p.z - claw.z, dy = p.y - (claw.y - 12);
+          if (Math.hypot(dx, dz) < p.r + 9 && Math.abs(dy) < 10) {
+            hit = true; break;
+          }
         }
       }
       if (hit) {
         mode = 'grab';
         modeT = 0;
         Sfx.grab();
+        updateUI();
       }
     } else if (mode === 'grab') {
       claw.open = Math.max(0, claw.open - dt / 0.45);
-      if (claw.open <= 0.15 && claw.heldList.length === 0) {
-        // 抓取半徑判定 (3D 空間圓球抓取)
+      if (claw.open <= 0.20 && claw.heldList.length === 0) {
+        const isExcavator = !!save.buffs.excavator;
+        const clawSizeBonus = (save.upgrades.size || 0) * 3 + (isExcavator ? 14 : 0);
+        const gripRad = 11 + clawSizeBonus;
+
         for (const p of prizes) {
           if (p.held) continue;
           const dx = p.x - claw.x, dz = p.z - claw.z, dy = p.y - (claw.y - 10);
           const dist3D = Math.hypot(dx, dz, dy);
-          if (dist3D < p.r + 11) {
+          if (dist3D < p.r + gripRad) {
+            // 抓取判定
+            const isGuaranteed = save.armed;
+            const motorStrength = 0.4 + (save.upgrades.str || 0) * 0.20;
+            const successChance = isGuaranteed ? 1.0 : Math.min(0.85, (motorStrength * 1.5) / p.w);
+            const willHold = Math.random() < successChance;
+
             p.held = true;
+            p.willSlip = !willHold;
             p.localX = dx;
             p.localZ = dz;
             p.localY = dy;
             claw.heldList.push(p);
-            if (claw.heldList.length >= 2) break; // 最多雙抓
+
+            if (!isExcavator && claw.heldList.length >= 2) break;
+            if (isExcavator && claw.heldList.length >= 5) break;
           }
         }
+
         if (claw.heldList.length > 0) {
-          showToast(`🎯 夾中了！【${claw.heldList.map(p => p.type.name).join(' + ')}】`);
+          toast(`🎯 夾中了！【${claw.heldList.map(p => p.type.name).join(' + ')}】`);
+          if (save.buffs.excavator) save.buffs.excavator = false;
         }
       }
+
       if (modeT > 0.65) {
         mode = 'up';
         modeT = 0;
       }
     } else if (mode === 'up') {
       claw.y = Math.min(BOX_TOP_Y, claw.y + 80 * dt);
+      // 半空滑脫判定
+      if (claw.heldList.length > 0 && modeT > 0.35) {
+        for (let i = claw.heldList.length - 1; i >= 0; i--) {
+          const p = claw.heldList[i];
+          if (p.willSlip && Math.random() < 0.08) {
+            p.held = false;
+            p.dropping = true;
+            p.willSlip = false;
+            p.vx = (Math.random() - 0.5) * 15;
+            p.vz = (Math.random() - 0.5) * 15;
+            claw.heldList.splice(i, 1);
+            Sfx.slip();
+            say(LINES.fail[Math.floor(Math.random() * LINES.fail.length)]);
+            popups.push({ text: '滑掉了！', sx: project(claw.x, claw.y, claw.z).sx, sy: project(claw.x, claw.y, claw.z).sy - 10, life: 1.0, col: '#ff3b3b' });
+          }
+        }
+      }
       if (claw.y >= BOX_TOP_Y) {
         mode = 'back';
         modeT = 0;
       }
     } else if (mode === 'back') {
-      const spd = 65 * dt;
+      const spd = 70 * dt;
       const dx = HOME_X - claw.x, dz = HOME_Z - claw.z;
       const dist = Math.hypot(dx, dz);
       if (dist < 2.5) {
@@ -436,60 +889,30 @@
         for (const p of claw.heldList) {
           p.held = false;
           p.dropping = true;
-          p.vx = (Math.random() - 0.5) * 12;
-          p.vz = (Math.random() - 0.5) * 12;
-          p.vy = -15;
+          p.vx = (Math.random() - 0.5) * 10;
+          p.vz = (Math.random() - 0.5) * 10;
+          p.vy = -20;
         }
         claw.heldList = [];
       }
-      if (modeT > 1.1) {
-        mode = 'move';
+      if (modeT > 1.2) {
+        mode = 'idle';
         modeT = 0;
+        updateUI();
       }
     }
 
-    // 更新娃娃物理位置與出貨判定
-    for (let i = prizes.length - 1; i >= 0; i--) {
-      const p = prizes[i];
+    // 更新娃娃物理跟隨
+    for (const p of prizes) {
       if (p.held) {
         p.x = claw.x + (p.localX || 0);
         p.z = claw.z + (p.localZ || 0);
         p.y = claw.y - 12 + (p.localY || 0);
-      } else if (p.dropping) {
-        p.vy -= 190 * dt;
-        p.x += p.vx * dt;
-        p.z += p.vz * dt;
-        p.y += p.vy * dt;
-
-        // 判定落入出貨口
-        if (p.x <= CHUTE_X && p.z >= CHUTE_Z && p.y < -15) {
-          wins++;
-          const gain = p.type.isBoss ? 250 : (p.type.isChest ? 80 : 25);
-          coins += gain;
-          Sfx.win();
-          showToast(`🎉 出貨成功！獲得【${p.type.name}】+${gain}🪙！`);
-          // 出貨煙火粒子
-          for (let k = 0; k < 25; k++) {
-            particles.push({
-              sx: ORIGIN_X - 60 + (Math.random() - 0.5) * 20,
-              sy: ORIGIN_Y + 30 + (Math.random() - 0.5) * 20,
-              vx: (Math.random() - 0.5) * 80,
-              vy: -Math.random() * 120 - 40,
-              life: 0.8,
-              col: ['#ffd23f', '#ff5fa2', '#38b6ff', '#5dff7a'][Math.floor(Math.random() * 4)]
-            });
-          }
-          prizes.splice(i, 1);
-          continue;
-        }
-
-        if (p.y <= p.r) {
-          p.y = p.r;
-          p.vy = 0;
-          p.dropping = false;
-        }
       }
     }
+
+    // 執行 3D 剛體物理引擎
+    step3DPhysics(dt);
 
     // 粒子更新
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -501,13 +924,16 @@
       if (pt.life <= 0) particles.splice(i, 1);
     }
 
-    // UI 刷新
-    document.getElementById('ui-mode').textContent = mode.toUpperCase();
-    document.getElementById('ui-coins').textContent = coins + ' 🪙';
-    document.getElementById('ui-wins').textContent = wins + ' 隻';
+    // 浮動文字更新
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const pop = popups[i];
+      pop.life -= dt;
+      pop.sy -= 20 * dt;
+      if (pop.life <= 0) popups.splice(i, 1);
+    }
   }
 
-  // ================= 繪圖渲染核心 (2.5D Isometric Painter) =================
+  /* ============ 繪圖核心 ============ */
   function drawLine(p1, p2, col, w = 1) {
     ctx.strokeStyle = col;
     ctx.lineWidth = w;
@@ -528,34 +954,56 @@
   }
 
   function render() {
+    ctx.save();
+    if (screenShake > 0) {
+      ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+      screenShake = Math.max(0, screenShake - 0.3);
+    }
     ctx.clearRect(0, 0, W, H);
 
-    // 1. 機台外殼頂部招牌 (Top Marquee)
-    ctx.fillStyle = '#ff2a70';
-    ctx.fillRect(18, 12, W - 36, 26);
-    ctx.fillStyle = '#1b0e36';
-    ctx.fillRect(20, 14, W - 40, 22);
-    ctx.fillStyle = '#ffd23f';
-    ctx.font = '11px monospace';
+    const now = performance.now() / 1000;
+    const isFever = (save.combo || 0) >= 2;
+
+    // 1. 機台外殼頂部霓虹跑馬燈招牌
+    ctx.fillStyle = '#230b3d';
+    ctx.fillRect(14, 8, W - 28, 30);
+    ctx.strokeStyle = '#6e38b3';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(14, 8, W - 28, 30);
+
+    // 跑馬燈泡 (14 顆)
+    const bulbCols = isFever ? ['#ff3b3b', '#ffd23f', '#5dff7a', '#38b6ff', '#ff5fa2', '#c08bff'] : ['#ffd23f', '#ff5fa2', '#38b6ff'];
+    const bulbSpeed = isFever ? 10 : 4;
+    for (let b = 0; b < 14; b++) {
+      const bx = 22 + b * ((W - 44) / 13);
+      ctx.fillStyle = bulbCols[(b + Math.floor(now * bulbSpeed)) % bulbCols.length];
+      ctx.fillRect(bx - 2, 11, 4, 3);
+      ctx.fillRect(bx - 2, 32, 4, 3);
+    }
+
+    // 招牌標題
+    ctx.fillStyle = isFever ? (Math.floor(now * 4) % 2 ? '#ff5fa2' : '#ffd23f') : '#ffd23f';
+    ctx.font = '10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('★ SEGA UFO CATCHER 2.5D ★', W / 2, 29);
+    const marqueeTitle = isFever ? `🔥 FEVER x${save.combo} ★ UFO CATCHER ★` : '★ SEGA UFO CATCHER 2.5D ★';
+    ctx.fillText(marqueeTitle, W / 2, 26);
 
     // 2. 機台地板基座與等角網格
     const f0 = project(-BOX_X, 0, -BOX_Z);
     const f1 = project(BOX_X, 0, -BOX_Z);
     const f2 = project(BOX_X, 0, BOX_Z);
     const f3 = project(-BOX_X, 0, BOX_Z);
-    drawPoly([f0, f1, f2, f3], '#2b1b4f', '#4e2d8a', 2);
+    drawPoly([f0, f1, f2, f3], '#21133d', '#4e2d8a', 2);
 
-    // 等角地板棋盤輔助格線
+    // 等角地板棋盤格線
     for (let x = -BOX_X; x <= BOX_X; x += 22) {
-      drawLine(project(x, 0, -BOX_Z), project(x, 0, BOX_Z), 'rgba(255,255,255,0.05)');
+      drawLine(project(x, 0, -BOX_Z), project(x, 0, BOX_Z), 'rgba(255,255,255,0.06)');
     }
     for (let z = -BOX_Z; z <= BOX_Z; z += 22) {
-      drawLine(project(-BOX_X, 0, z), project(BOX_X, 0, z), 'rgba(255,255,255,0.05)');
+      drawLine(project(-BOX_X, 0, z), project(BOX_X, 0, z), 'rgba(255,255,255,0.06)');
     }
 
-    // 3. 洞口與出貨壓克力檔板 (Chute hole & barrier)
+    // 3. 立體出貨口斗槽 (Chute hole)
     const ch0 = project(-BOX_X, 0, CHUTE_Z);
     const ch1 = project(CHUTE_X, 0, CHUTE_Z);
     const ch2 = project(CHUTE_X, 0, BOX_Z);
@@ -573,36 +1021,42 @@
     drawLine(project(CHUTE_X, 0, BOX_Z), project(CHUTE_X, 36, BOX_Z), 'rgba(120,230,255,0.8)', 2);
     drawLine(project(-BOX_X, 0, CHUTE_Z), project(-BOX_X, 36, CHUTE_Z), 'rgba(120,230,255,0.8)', 2);
 
-    // 4. 後方立柱與壓克力壁面
+    // 4. 後方合金立柱
     const bL_top = project(-BOX_X, BOX_TOP_Y, -BOX_Z);
     const bR_top = project(BOX_X, BOX_TOP_Y, -BOX_Z);
-    drawLine(f0, bL_top, '#523091', 3);
-    drawLine(f1, bR_top, '#523091', 3);
-    drawLine(bL_top, bR_top, '#784ec4', 2);
+    drawLine(f0, bL_top, '#482782', 3);
+    drawLine(f1, bR_top, '#482782', 3);
+    drawLine(bL_top, bR_top, '#693ebb', 2);
 
-    // 5. 深度排序渲染 (Depth Sorting: X + Z)
+    // 5. 深度排序渲染 (Depth Sorting)
     const drawList = [];
 
-    // 5.1 天車落點影子與十字光學瞄準圈 (Crosshair Floor Projection)
+    // 5.1 高度自適應陰影投影 (Height-Adaptive Shadow Projection)
+    const surfY = getUnderSurfaceHeight(claw.x, claw.z);
     drawList.push({
-      depth: claw.x + claw.z - 3,
+      depth: (claw.x + claw.z) * 100 + surfY - 2,
       render: () => {
-        const sh = project(claw.x, 0, claw.z);
-        // 半透明地面投影圓斑
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        const sh = project(claw.x, surfY, claw.z);
+
+        // 貼合表面陰影橢圓 (若在娃娃頂部則縮小並加深)
+        const isUpOnDoll = surfY > 2;
+        const shRadX = isUpOnDoll ? 13 : 16;
+        const shRadY = isUpOnDoll ? 6.5 : 8;
+
+        ctx.fillStyle = isUpOnDoll ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.40)';
         ctx.beginPath();
-        ctx.ellipse(sh.sx, sh.sy, 16, 8, 0, 0, Math.PI * 2);
+        ctx.ellipse(sh.sx, sh.sy, shRadX, shRadY, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // 金色瞄準十字線
-        ctx.strokeStyle = 'rgba(255, 210, 63, 0.7)';
+        // 金色瞄準十字準心
+        ctx.strokeStyle = isUpOnDoll ? '#ffd23f' : 'rgba(255, 210, 63, 0.7)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(sh.sx - 10, sh.sy); ctx.lineTo(sh.sx + 10, sh.sy);
-        ctx.moveTo(sh.sx, sh.sy - 5); ctx.lineTo(sh.sx, sh.sy + 5);
+        ctx.moveTo(sh.sx - 9, sh.sy); ctx.lineTo(sh.sx + 9, sh.sy);
+        ctx.moveTo(sh.sx, sh.sy - 4.5); ctx.lineTo(sh.sx, sh.sy + 4.5);
         ctx.stroke();
 
-        // 垂直光學紅色虛線 (自天車垂直直射地面，消除深度視差)
+        // 垂直紅色光學雷射瞄準線
         const clPos = project(claw.x, claw.y, claw.z);
         ctx.save();
         ctx.setLineDash([3, 3]);
@@ -615,22 +1069,24 @@
       }
     });
 
-    // 5.2 娃娃繪製 (3D Isometric Dolls)
+    // 5.2 娃娃繪製
     for (const p of prizes) {
       drawList.push({
-        depth: p.x + p.z,
+        depth: (p.x + p.z) * 100 + p.y,
         render: () => {
           const sp = project(p.x, p.y, p.z);
-          const r = p.r * 1.05;
+          const r = p.r;
 
-          // 陰影
-          const sh = project(p.x, 0, p.z);
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-          ctx.beginPath();
-          ctx.ellipse(sh.sx, sh.sy, r * 0.9, r * 0.45, 0, 0, Math.PI * 2);
-          ctx.fill();
+          // 地板微弱環境光遮蔽
+          if (p.y > r + 1) {
+            const floorSh = project(p.x, 0, p.z);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+            ctx.beginPath();
+            ctx.ellipse(floorSh.sx, floorSh.sy, r * 0.9, r * 0.45, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
-          // 娃娃主體
+          // 3D 球體漸層高光
           ctx.fillStyle = p.type.col;
           ctx.beginPath();
           ctx.arc(sp.sx, sp.sy, r, 0, Math.PI * 2);
@@ -639,47 +1095,56 @@
           ctx.lineWidth = 1.2;
           ctx.stroke();
 
-          // 3D 高光球體弧光
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+          // 球面高光反光
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.38)';
           ctx.beginPath();
           ctx.arc(sp.sx - r * 0.3, sp.sy - r * 0.3, r * 0.35, 0, Math.PI * 2);
           ctx.fill();
 
-          // 五官特徵
-          if (p.type.isChest) {
-            // 神秘寶箱金屬邊框與發光鎖扣
+          // 各娃娃立體特徵
+          if (p.type.isBag) {
+            // 彩虹金幣福袋：金色束繩與綁帶
+            ctx.fillStyle = '#ffd23f';
+            ctx.fillRect(sp.sx - 3, sp.sy - 3, 6, 2);
+            ctx.fillStyle = '#ffea75';
+            ctx.fillRect(sp.sx - 1, sp.sy + 1, 2, 2);
+          } else if (p.type.isChest) {
+            // 神秘寶箱：金色鉚釘與青色鎖孔
             ctx.fillStyle = '#ffd23f';
             ctx.fillRect(sp.sx - 3, sp.sy - 3, 6, 6);
             ctx.fillStyle = '#00e5ff';
             ctx.fillRect(sp.sx - 1, sp.sy - 1, 2, 2);
           } else if (p.type.isBoss) {
-            // 金色貓王紅項圈與大耳朵
+            // 金色招財貓王
             ctx.fillStyle = '#e82e65';
-            ctx.fillRect(sp.sx - 4, sp.sy + 4, 8, 2);
+            ctx.fillRect(sp.sx - 5, sp.sy + 5, 10, 2);
             ctx.fillStyle = '#fff';
-            ctx.fillRect(sp.sx - 3, sp.sy - 2, 2, 2);
-            ctx.fillRect(sp.sx + 1, sp.sy - 2, 2, 2);
+            ctx.fillRect(sp.sx - 4, sp.sy - 3, 3, 3);
+            ctx.fillRect(sp.sx + 1, sp.sy - 3, 3, 3);
+            ctx.fillStyle = '#150a2b';
+            ctx.fillRect(sp.sx - 3, sp.sy - 2, 1, 2);
+            ctx.fillRect(sp.sx + 2, sp.sy - 2, 1, 2);
           } else if (p.type.ear) {
-            // 貓耳/熊耳/兔耳
+            // 耳朵
             ctx.fillStyle = p.type.col;
             ctx.beginPath();
             ctx.arc(sp.sx - 4, sp.sy - (p.type.longEar ? 7 : 4), p.type.longEar ? 3 : 2, 0, Math.PI * 2);
             ctx.arc(sp.sx + 4, sp.sy - (p.type.longEar ? 7 : 4), p.type.longEar ? 3 : 2, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
-            // 眼睛
+            // 雙眼
             ctx.fillStyle = '#150a2b';
             ctx.fillRect(sp.sx - 3, sp.sy - 1, 2, 2);
             ctx.fillRect(sp.sx + 1, sp.sy - 1, 2, 2);
           } else if (p.type.beak) {
-            // 小雞嘴巴
+            // 小雞
             ctx.fillStyle = '#150a2b';
             ctx.fillRect(sp.sx - 3, sp.sy - 1, 1, 2);
             ctx.fillRect(sp.sx + 2, sp.sy - 1, 1, 2);
             ctx.fillStyle = '#ff7b00';
             ctx.fillRect(sp.sx - 1, sp.sy, 2, 2);
           } else {
-            // 普通雙眼
+            // 普通眼睛
             ctx.fillStyle = '#150a2b';
             ctx.fillRect(sp.sx - 3, sp.sy - 1, 2, 2);
             ctx.fillRect(sp.sx + 1, sp.sy - 1, 2, 2);
@@ -688,60 +1153,62 @@
       });
     }
 
-    // 5.3 爪子實體繪製 (2.5D Claw Assembly)
+    // 5.3 爪子本體繪製
     drawList.push({
-      depth: claw.x + claw.z,
+      depth: (claw.x + claw.z) * 100 + claw.y + 10,
       render: () => {
         const topPos = project(claw.x, BOX_TOP_Y, claw.z);
         const headPos = project(claw.x, claw.y, claw.z);
 
-        // 天車頂部軌道鋼索
+        // 天車鋼索
         drawLine(topPos, headPos, '#cfd6e6', 2);
 
         // 天車頂部驅動馬達
         ctx.fillStyle = '#ffd23f';
-        ctx.fillRect(topPos.sx - 9, topPos.sy - 7, 18, 8);
+        ctx.fillRect(topPos.sx - 10, topPos.sy - 7, 20, 8);
         ctx.fillStyle = '#150a2b';
-        ctx.strokeRect(topPos.sx - 9, topPos.sy - 7, 18, 8);
+        ctx.strokeRect(topPos.sx - 10, topPos.sy - 7, 20, 8);
 
         // 爪頭金屬基座
-        ctx.fillStyle = '#e82e65';
-        ctx.fillRect(headPos.sx - 8, headPos.sy - 6, 16, 9);
+        const isExcavator = !!save.buffs.excavator;
+        ctx.fillStyle = isExcavator ? '#f39c12' : '#e82e65';
+        ctx.fillRect(headPos.sx - 9, headPos.sy - 6, 18, 10);
         ctx.fillStyle = '#150a2b';
-        ctx.strokeRect(headPos.sx - 8, headPos.sy - 6, 16, 9);
-        ctx.fillStyle = '#ffd23f';
+        ctx.strokeRect(headPos.sx - 9, headPos.sy - 6, 18, 10);
+
+        // 保夾發光指示燈
+        ctx.fillStyle = save.armed ? (Math.floor(now * 4) % 2 ? '#ffd23f' : '#ff3b3b') : '#ffd23f';
         ctx.fillRect(headPos.sx - 2, headPos.sy - 3, 4, 3);
 
-        // 3 支 2.5D 立體爪臂 (依據開合度展開)
-        const span = 9 + claw.open * 13;
+        // 爪臂展開幾何
+        const span = 9 + claw.open * 13 + (save.upgrades.size || 0) * 3;
         const armLeft = project(claw.x - span, claw.y - 15, claw.z + span * 0.5);
         const armRight = project(claw.x + span, claw.y - 15, claw.z - span * 0.5);
         const armBack = project(claw.x, claw.y - 15, claw.z - span);
 
         for (const tip of [armLeft, armRight, armBack]) {
           drawLine(headPos, tip, '#150a2b', 4);
-          drawLine(headPos, tip, '#cfd6e6', 2);
-          // 爪尖高碳鋼防滑指
+          drawLine(headPos, tip, isExcavator ? '#f1c40f' : '#cfd6e6', 2);
           ctx.fillStyle = '#ffd23f';
           ctx.fillRect(tip.sx - 2, tip.sy - 2, 4, 4);
         }
       }
     });
 
-    // 排序繪製
+    // 依據深度由遠及近排序渲染
     drawList.sort((a, b) => a.depth - b.depth);
     for (const item of drawList) item.render();
 
-    // 6. 前方透明壓克力機身柱與玻璃反光 (Front Acrylic Reflections)
+    // 6. 前方透明壓克力機身柱與玻璃反光
     const fL_top = project(-BOX_X, BOX_TOP_Y, BOX_Z);
     const fR_top = project(BOX_X, BOX_TOP_Y, BOX_Z);
-    drawLine(f3, fL_top, 'rgba(120, 230, 255, 0.5)', 3);
-    drawLine(f2, fR_top, 'rgba(120, 230, 255, 0.5)', 3);
-    drawLine(fL_top, fR_top, 'rgba(120, 230, 255, 0.7)', 2);
+    drawLine(f3, fL_top, 'rgba(120, 230, 255, 0.45)', 3);
+    drawLine(f2, fR_top, 'rgba(120, 230, 255, 0.45)', 3);
+    drawLine(fL_top, fR_top, 'rgba(120, 230, 255, 0.65)', 2);
 
-    // 玻璃斜向高光炫光
+    // 玻璃斜向反光高光條
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
     ctx.lineWidth = 14;
     ctx.beginPath();
     ctx.moveTo(W / 2 + 30, 60);
@@ -749,34 +1216,61 @@
     ctx.stroke();
     ctx.restore();
 
-    // 7. 出貨慶祝粒子
+    // 7. 出貨粒子與浮動文字
     for (const pt of particles) {
       ctx.fillStyle = pt.col;
       ctx.fillRect(Math.round(pt.sx), Math.round(pt.sy), 3, 3);
     }
+    for (const pop of popups) {
+      ctx.fillStyle = pop.col;
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(pop.text, pop.sx, pop.sy);
+    }
+
+    ctx.restore();
   }
 
-  // 遊戲動畫循環
-  let lastTime = performance.now();
-  function loop(now) {
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
-    lastTime = now;
-    update(dt);
-    render();
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+  /* ============ UI 刷新與按鈕綁定 ============ */
+  function updateUI() {
+    document.getElementById('ui-coins').textContent = `${save.coins} 🪙`;
+    document.getElementById('ui-credits').textContent = credits;
+    document.getElementById('ui-pity').textContent = `${save.pity}/300`;
+    document.getElementById('ui-mode').textContent = mode === 'move' ? `瞄準中(${Math.max(0, Math.ceil(timer))}s)` : (mode === 'down' ? '下爪中' : mode.toUpperCase());
 
-  // ================= 操作監聽與綁定 =================
+    const btnDrop = document.getElementById('btn-drop');
+    if (mode === 'down') {
+      btnDrop.textContent = '🛑 提前合爪(Space)';
+      btnDrop.disabled = false;
+      btnDrop.classList.add('down-mode');
+    } else if (mode === 'move') {
+      btnDrop.textContent = '🎯 下爪抓取(Space)';
+      btnDrop.disabled = false;
+      btnDrop.classList.remove('down-mode');
+    } else {
+      btnDrop.textContent = '🎯 下爪抓取';
+      btnDrop.disabled = true;
+      btnDrop.classList.remove('down-mode');
+    }
+
+    const btnCoin = document.getElementById('btn-coin');
+    btnCoin.disabled = mode !== 'idle';
+  }
+
+  // 鍵盤操作監聽
   window.addEventListener('keydown', (e) => {
     Sfx.init();
     if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') input.left = true;
     if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') input.right = true;
     if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') input.up = true;
     if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') input.down = true;
-    if (e.key === ' ' || e.key === 'Enter') {
+    if (e.key === ' ') {
       e.preventDefault();
       triggerDrop();
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      insertCoin();
     }
     if (e.key === 'f' || e.key === 'F') toggleSpeed();
   });
@@ -803,44 +1297,157 @@
   bindBtn('btn-left', 'left');
   bindBtn('btn-right', 'right');
 
-  function triggerDrop() {
-    if (mode === 'move') {
-      mode = 'down';
-      modeT = 0;
-      Sfx.drop();
-      showToast('🚀 爪子下放中！');
-    }
-  }
-  document.getElementById('btn-drop').addEventListener('click', () => { Sfx.click(); triggerDrop(); });
+  document.getElementById('btn-coin').addEventListener('click', insertCoin);
+  document.getElementById('btn-drop').addEventListener('click', triggerDrop);
 
   function toggleSpeed() {
     timeScale = timeScale === 1 ? 2 : 1;
     const btn = document.getElementById('btn-speed');
-    btn.textContent = timeScale === 2 ? '⚡ 2X' : '⏩ 1X';
-    btn.classList.toggle('on', timeScale === 2);
+    btn.textContent = timeScale === 2 ? '⏩ 2X' : '▶ 1X';
+    btn.classList.toggle('active', timeScale === 2);
     Sfx.click();
-    showToast(timeScale === 2 ? '⚡ 已開啟 2 倍速！' : '▶ 切換為 1 倍速');
+    toast(timeScale === 2 ? '⚡ 已開啟 2 倍速！' : '▶ 切換為正常 1X 速度');
   }
   document.getElementById('btn-speed').addEventListener('click', toggleSpeed);
 
   document.getElementById('btn-sound').addEventListener('click', () => {
     Sfx.init();
-    Sfx.muted = !Sfx.muted;
-    document.getElementById('btn-sound').textContent = Sfx.muted ? '🔇 靜音' : '🔊 音效';
-    showToast(Sfx.muted ? '已靜音' : '音效已開啟');
+    save.muted = !save.muted;
+    document.getElementById('btn-sound').textContent = save.muted ? '🔇 靜音' : '🔊 音效';
+    toast(save.muted ? '已靜音' : '音效已開啟');
+    persist();
   });
+
+  document.getElementById('btn-reset-machine').addEventListener('click', () => {
+    if (mode !== 'idle') { toast('請等待遊戲結束後再重整！'); return; }
+    initPrizes();
+    toast('🔄 機台已重新補滿 60 隻娃娃！');
+    Sfx.coin();
+  });
+
+  /* ============ 彈窗介面 (娃娃櫃與商店) ============ */
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  document.getElementById('modal-close').addEventListener('click', () => modal.style.display = 'none');
+
+  document.getElementById('btn-dex').addEventListener('click', () => {
+    modalTitle.textContent = '🧸 娃娃櫃 (圖鑑與出售)';
+    let html = '<div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">';
+    html += `<span>已收集 ${Object.keys(save.coll).length}/${DOLL_TYPES.length} 種</span>`;
+    html += `<button class="pbtn" id="btn-sell-all" style="padding:4px 8px;font-size:11px;background:#27ae60">一鍵出售重複娃</button></div>`;
+    html += '<div class="dex-grid">';
+    DOLL_TYPES.forEach(t => {
+      const cnt = save.coll[t.id] || 0;
+      html += `<div class="dex-item">
+        <div style="width:18px;height:18px;border-radius:50%;background:${t.col};border:1px solid #000;margin:0 auto"></div>
+        <b>${cnt > 0 ? t.name : '？？？'}</b>
+        <span style="color:#ffd23f">${cnt > 0 ? `× ${cnt}` : '未獲得'}</span>
+        <span style="color:#aaa">${t.price}🪙/隻</span>
+      </div>`;
+    });
+    html += '</div>';
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex';
+
+    document.getElementById('btn-sell-all')?.addEventListener('click', () => {
+      let earned = 0;
+      DOLL_TYPES.forEach(t => {
+        const cnt = save.coll[t.id] || 0;
+        if (cnt > 1) {
+          earned += (cnt - 1) * t.price;
+          save.coll[t.id] = 1;
+        }
+      });
+      if (earned > 0) {
+        save.coins += earned;
+        persist();
+        toast(`💰 出售成功！換算獲得 +${earned}🪙 金幣！`);
+        Sfx.win();
+        modal.style.display = 'none';
+        updateUI();
+      } else {
+        toast('沒有多餘的重複娃娃可出售喔！');
+      }
+    });
+  });
+
+  document.getElementById('btn-shop').addEventListener('click', () => {
+    modalTitle.textContent = '⚙️ RPG 機台改裝商店';
+    const upgInfo = [
+      { key: 'size', name: '巨型爪', desc: '爪子範圍+20%，能夾大招財貓', cost: 180 },
+      { key: 'str', name: '升級馬達', desc: '爪力+20%，半空不易滑脫', cost: 150 },
+      { key: 'rope', name: '加長繩索', desc: '深度+20%，能探底層', cost: 120 },
+      { key: 'time', name: '操作延時', desc: '瞄準時間+4秒', cost: 100 }
+    ];
+    let html = '';
+    upgInfo.forEach(u => {
+      const lvl = save.upgrades[u.key] || 0;
+      const cost = u.cost * (lvl + 1);
+      const isMax = lvl >= 3;
+      html += `<div class="shop-item">
+        <div>
+          <b>${u.name} (Lv.${lvl})</b>
+          <div style="color:#aaa">${u.desc}</div>
+        </div>
+        <button class="pbtn btn-upg" data-key="${u.key}" data-cost="${cost}" ${isMax ? 'disabled' : ''} style="padding:4px 8px;font-size:11px">
+          ${isMax ? '已滿級' : `升級 ${cost}🪙`}
+        </button>
+      </div>`;
+    });
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex';
+
+    document.querySelectorAll('.btn-upg').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const cost = parseInt(btn.dataset.cost);
+        if (save.coins >= cost) {
+          save.coins -= cost;
+          save.upgrades[key] = (save.upgrades[key] || 0) + 1;
+          persist();
+          toast(`⚙️ 升級成功！【${key}】達到 Lv.${save.upgrades[key]}`);
+          Sfx.win();
+          modal.style.display = 'none';
+          updateUI();
+        } else {
+          toast('🪙 金幣不足！');
+        }
+      });
+    });
+  });
+
+  // 主遊戲循環
+  let lastTime = performance.now();
+  function gameLoop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(gameLoop);
+  }
+  requestAnimationFrame(gameLoop);
 
   // 對外測試介面
   window.Prototype25D = {
     get claw() { return claw; },
     get prizes() { return prizes; },
     get mode() { return mode; },
+    get credits() { return credits; },
+    get save() { return save; },
+    get combo() { return save.combo; },
+    get DOLL_TYPES() { return DOLL_TYPES; },
+    insertCoin,
+    startRound,
     triggerDrop,
-    toggleSpeed
+    triggerEarlyClose,
+    onWinPrize: onCollectPrize,
+    getUnderSurfaceHeight,
+    step3DPhysics
   };
 
+  updateUI();
 })();
 </script>
-
 </body>
 </html>
