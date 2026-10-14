@@ -494,6 +494,7 @@
   let popups = [];
   let earlyCloseRequested = false;
   let screenShake = 0;
+  let roundWon = false;
   const input = { left: false, right: false, up: false, down: false };
 
   /* ============ 3D 剛體物理堆疊系統 ============ */
@@ -685,6 +686,7 @@
     modeT = 0;
     timer = 18 + (save.upgrades.time || 0) * 4;
     earlyCloseRequested = false;
+    roundWon = false;
     claw.open = 1.0;
     claw.heldList = [];
     updateUI();
@@ -717,6 +719,7 @@
   }
 
   function onCollectPrize(p) {
+    roundWon = true;
     save.wins++;
     save.coll[p.type.id] = (save.coll[p.type.id] || 0) + 1;
     save.combo = (save.combo || 0) + 1;
@@ -896,6 +899,10 @@
         claw.heldList = [];
       }
       if (modeT > 1.2) {
+        if (!roundWon && save.combo > 0) {
+          save.combo = 0;
+          persist();
+        }
         mode = 'idle';
         modeT = 0;
         updateUI();
@@ -1259,6 +1266,10 @@
 
   // 鍵盤操作監聽
   window.addEventListener('keydown', (e) => {
+    if (modal && modal.style.display !== 'none') {
+      if (e.key === 'Escape') modal.style.display = 'none';
+      return;
+    }
     Sfx.init();
     if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') input.left = true;
     if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') input.right = true;
@@ -1280,6 +1291,10 @@
     if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') input.right = false;
     if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') input.up = false;
     if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') input.down = false;
+  });
+
+  window.addEventListener('blur', () => {
+    input.left = input.right = input.up = input.down = false;
   });
 
   function bindBtn(id, key) {
@@ -1378,7 +1393,8 @@
       { key: 'size', name: '巨型爪', desc: '爪子範圍+20%，能夾大招財貓', cost: 180 },
       { key: 'str', name: '升級馬達', desc: '爪力+20%，半空不易滑脫', cost: 150 },
       { key: 'rope', name: '加長繩索', desc: '深度+20%，能探底層', cost: 120 },
-      { key: 'time', name: '操作延時', desc: '瞄準時間+4秒', cost: 100 }
+      { key: 'time', name: '操作延時', desc: '瞄準時間+4秒', cost: 100 },
+      { key: 'speed', name: '高速天車', desc: '移動與升降速度+15%', cost: 110 }
     ];
     let html = '';
     upgInfo.forEach(u => {
